@@ -12,9 +12,16 @@ const VideoFeed: React.FC = () => {
     selectedChannel,
     clearError,
     fetchLatestVideos, // Garder pour le rafraîchissement manuel
+    watchedVideoIds,
+    laterVideoIds,
+    markVideoWatched,
+    markVideoLater,
+    removeVideoFromWatched,
+    removeVideoFromLater,
   } = useYoutube();
   const [refreshing, setRefreshing] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [tab, setTab] = useState<'a_voir' | 'deja_vu' | 'plus_tard'>('a_voir');
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -23,9 +30,16 @@ const VideoFeed: React.FC = () => {
     setTimeout(() => setRefreshing(false), 1000);
   };
 
-  const filteredVideos = selectedChannel && !showAll
-    ? videos.filter(video => video.channelId === selectedChannel)
-    : videos;
+  let filteredVideos = videos;
+  if (tab === 'a_voir') {
+    filteredVideos = videos.filter(
+      v => !watchedVideoIds.includes(v.id) && !laterVideoIds.includes(v.id) && (showAll || !selectedChannel || v.channelId === selectedChannel)
+    );
+  } else if (tab === 'deja_vu') {
+    filteredVideos = videos.filter(v => watchedVideoIds.includes(v.id) && (showAll || !selectedChannel || v.channelId === selectedChannel));
+  } else if (tab === 'plus_tard') {
+    filteredVideos = videos.filter(v => laterVideoIds.includes(v.id) && (showAll || !selectedChannel || v.channelId === selectedChannel));
+  }
 
   const selectedChannelName = selectedChannel 
     ? favorites.find(f => f.id === selectedChannel)?.title 
@@ -51,12 +65,12 @@ const VideoFeed: React.FC = () => {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {selectedChannelName 
-            ? `Vidéos récentes de ${selectedChannelName}` 
-            : 'Vidéos récentes'}
-        </h2>
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+        <div className="flex items-center gap-2 mb-2 md:mb-0">
+          <button onClick={() => setTab('a_voir')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'a_voir' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>À voir</button>
+          <button onClick={() => setTab('deja_vu')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'deja_vu' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>Déjà visionnée</button>
+          <button onClick={() => setTab('plus_tard')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'plus_tard' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>Plus tard</button>
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleRefresh}
@@ -95,7 +109,15 @@ const VideoFeed: React.FC = () => {
       ) : filteredVideos.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
           {filteredVideos.map((video) => (
-            <VideoCard key={video.id} video={video} />
+            <VideoCard 
+              key={video.id} 
+              video={video} 
+              tab={tab}
+              onMarkWatched={() => markVideoWatched(video.id)}
+              onMarkLater={() => markVideoLater(video.id)}
+              onRemoveWatched={() => removeVideoFromWatched(video.id)}
+              onRemoveLater={() => removeVideoFromLater(video.id)}
+            />
           ))}
         </div>
       ) : (

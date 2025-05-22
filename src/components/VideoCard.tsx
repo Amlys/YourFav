@@ -5,9 +5,14 @@ import { Video } from '../types';
 
 interface VideoCardProps {
   video: Video;
+  tab?: 'a_voir' | 'deja_vu' | 'plus_tard';
+  onMarkWatched?: () => void;
+  onMarkLater?: () => void;
+  onRemoveWatched?: () => void;
+  onRemoveLater?: () => void;
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ video, tab, onMarkWatched, onMarkLater, onRemoveWatched, onRemoveLater }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -66,9 +71,24 @@ const VideoCard: React.FC<VideoCardProps> = ({ video }) => {
             </span>
           </div>
           
-          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
             <Calendar size={14} className="mr-1" />
             <span>Published {formatDate(video.publishedAt)}</span>
+          </div>
+          
+          <div className="flex gap-2 mt-2">
+            {tab === 'a_voir' && (
+              <>
+                <button onClick={onMarkWatched} className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition">Déjà vu</button>
+                <button onClick={onMarkLater} className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition">Plus tard</button>
+              </>
+            )}
+            {tab === 'deja_vu' && (
+              <button onClick={onRemoveWatched} className="px-2 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500 transition">Retirer</button>
+            )}
+            {tab === 'plus_tard' && (
+              <button onClick={onRemoveLater} className="px-2 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500 transition">Retirer</button>
+            )}
           </div>
         </div>
         

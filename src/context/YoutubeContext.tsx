@@ -32,11 +32,16 @@ interface YoutubeContextType {
   removeFavorite: (channelId: string) => Promise<void>; // Modifié pour être async
   searchChannels: (query: string) => Promise<void>;
   fetchLatestVideos: () => Promise<void>;
-  // loadFromLocalStorage: () => void; // Supprimé
   setSelectedChannel: (id: string | null) => void;
   clearError: () => void;
   signInWithGoogle: () => Promise<void>; // Fonction de connexion
   signOutUser: () => Promise<void>; // Fonction de déconnexion
+  watchedVideoIds: string[];
+  laterVideoIds: string[];
+  markVideoWatched: (videoId: string) => void;
+  markVideoLater: (videoId: string) => void;
+  removeVideoFromWatched: (videoId: string) => void;
+  removeVideoFromLater: (videoId: string) => void;
 }
 
 const YoutubeContext = createContext<YoutubeContextType | undefined>(undefined);
@@ -50,6 +55,8 @@ export const YoutubeProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [selectedChannel, setSelectedChannel] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true); // État pour le chargement initial de l'auth
+  const [watchedVideoIds, setWatchedVideoIds] = useState<string[]>([]);
+  const [laterVideoIds, setLaterVideoIds] = useState<string[]>([]);
 
   const clearError = () => setError(null);
 
@@ -155,6 +162,47 @@ export const YoutubeProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
   }, [currentUser]);
 
+  // Gestion du localStorage pour les vidéos vues et plus tard (par utilisateur)
+  useEffect(() => {
+    if (!currentUser) {
+      setWatchedVideoIds([]);
+      setLaterVideoIds([]);
+      return;
+    }
+    const watchedKey = `watchedVideos_${currentUser.uid}`;
+    const laterKey = `laterVideos_${currentUser.uid}`;
+    const watched = localStorage.getItem(watchedKey);
+    const later = localStorage.getItem(laterKey);
+    setWatchedVideoIds(watched ? JSON.parse(watched) : []);
+    setLaterVideoIds(later ? JSON.parse(later) : []);
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const watchedKey = `watchedVideos_${currentUser.uid}`;
+    localStorage.setItem(watchedKey, JSON.stringify(watchedVideoIds));
+  }, [watchedVideoIds, currentUser]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const laterKey = `laterVideos_${currentUser.uid}`;
+    localStorage.setItem(laterKey, JSON.stringify(laterVideoIds));
+  }, [laterVideoIds, currentUser]);
+
+  const markVideoWatched = (videoId: string) => {
+    setWatchedVideoIds((prev) => prev.includes(videoId) ? prev : [...prev, videoId]);
+    setLaterVideoIds((prev) => prev.filter(id => id !== videoId)); // Si on marque comme vue, on l'enlève de "plus tard"
+  };
+  const markVideoLater = (videoId: string) => {
+    setLaterVideoIds((prev) => prev.includes(videoId) ? prev : [...prev, videoId]);
+    setWatchedVideoIds((prev) => prev.filter(id => id !== videoId)); // Si on met "plus tard", on l'enlève de "vue"
+  };
+  const removeVideoFromWatched = (videoId: string) => {
+    setWatchedVideoIds((prev) => prev.filter(id => id !== videoId));
+  };
+  const removeVideoFromLater = (videoId: string) => {
+    setLaterVideoIds((prev) => prev.filter(id => id !== videoId));
+  };
 
   const addFavorite = useCallback(async (channel: Channel) => {
     if (!currentUser) {
@@ -295,11 +343,6 @@ export const YoutubeProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [currentUser, favorites]); // Dépendances : currentUser et favorites
 
-  // Supprimer loadFromLocalStorage et saveToLocalStorage
-  // useEffect(() => { // Ancien loadFromLocalStorage
-  //   loadFromLocalStorage();
-  // }, [loadFromLocalStorage]);
-
   // Récupérer les vidéos lorsque les favoris (chargés depuis Firestore) changent
   // ou lorsque l'utilisateur change (ce qui recharge les favoris)
   useEffect(() => {
@@ -328,11 +371,16 @@ export const YoutubeProvider: React.FC<{ children: React.ReactNode }> = ({ child
         removeFavorite,
         searchChannels,
         fetchLatestVideos,
-        // loadFromLocalStorage, // Supprimé
         setSelectedChannel,
         clearError,
         signInWithGoogle, // Exposer signInWithGoogle
-        signOutUser // Exposer signOutUser
+        signOutUser, // Exposer signOutUser
+        watchedVideoIds,
+        laterVideoIds,
+        markVideoWatched,
+        markVideoLater,
+        removeVideoFromWatched,
+        removeVideoFromLater,
       }}
     >
       {children}
