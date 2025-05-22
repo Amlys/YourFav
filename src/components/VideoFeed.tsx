@@ -42,7 +42,7 @@ const VideoFeed: React.FC = () => {
           className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 flex items-center gap-2"
         >
           <RefreshCw size={16} />
-          Try again
+          Réessayer
         </button>
       </div>
     );
@@ -53,14 +53,14 @@ const VideoFeed: React.FC = () => {
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
           {selectedChannelName 
-            ? `Latest from ${selectedChannelName}` 
-            : 'Latest Videos'}
+            ? `Vidéos récentes de ${selectedChannelName}` 
+            : 'Vidéos récentes'}
         </h2>
         <button
           onClick={handleRefresh}
           disabled={isLoading || refreshing}
           className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-          aria-label="Refresh feed"
+          aria-label="Rafraîchir le flux"
         >
           <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
         </button>
@@ -83,10 +83,10 @@ const VideoFeed: React.FC = () => {
         <div className="p-8 text-center">
           <p className="text-gray-500 dark:text-gray-400 mb-4">
             {selectedChannel 
-              ? "No videos found for this channel in the last month" 
+              ? "Aucune vidéo trouvée pour cette chaîne au cours du dernier mois" 
               : favorites.length > 0 
-                ? "No videos available from the last month"
-                : "No videos available yet"}
+                ? "Aucune vidéo disponible pour le dernier mois"
+                : "Aucune vidéo disponible pour le moment"}
           </p>
           {selectedChannel && (
             <a
@@ -95,7 +95,7 @@ const VideoFeed: React.FC = () => {
               rel="noopener noreferrer"
               className="inline-flex items-center text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
             >
-              <span>View channel on YouTube</span>
+              <span>Voir la chaîne sur YouTube</span>
               <ExternalLink size={16} className="ml-1" />
             </a>
           )}

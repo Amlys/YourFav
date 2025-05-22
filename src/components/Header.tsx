@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Youtube, Moon, Sun } from 'lucide-react';
+import { Youtube, Moon, Sun, LogIn, LogOut } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useYoutube } from '../context/YoutubeContext';
 
 const Header: React.FC = () => {
   const { darkMode, toggleDarkMode } = useTheme();
+  const { currentUser, signInWithGoogle, signOutUser } = useYoutube();
 
   return (
     <header className="bg-white dark:bg-gray-800 shadow-sm">
@@ -18,17 +20,51 @@ const Header: React.FC = () => {
             <span className="font-bold text-xl">Yourfav</span>
           </Link>
           
-          <button
-            onClick={toggleDarkMode}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {darkMode ? (
-              <Sun size={20} className="text-yellow-400" />
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {darkMode ? (
+                <Sun size={20} className="text-yellow-400" />
+              ) : (
+                <Moon size={20} className="text-gray-600" />
+              )}
+            </button>
+
+            {currentUser ? (
+              <div className="flex items-center space-x-2">
+                {currentUser.photoURL && (
+                  <img 
+                    src={currentUser.photoURL} 
+                    alt={currentUser.displayName || 'User avatar'} 
+                    className="w-8 h-8 rounded-full"
+                  />
+                )}
+                <span className="text-sm text-gray-700 dark:text-gray-300 hidden sm:inline">
+                  {currentUser.displayName || currentUser.email}
+                </span>
+                <button
+                  onClick={signOutUser}
+                  className="flex items-center space-x-1 p-2 rounded-md text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  aria-label="Sign out"
+                >
+                  <LogOut size={18} />
+                  <span className="hidden md:inline">Déconnexion</span>
+                </button>
+              </div>
             ) : (
-              <Moon size={20} className="text-gray-600" />
+              <button
+                onClick={signInWithGoogle}
+                className="flex items-center space-x-1 p-2 rounded-md text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Sign in with Google"
+              >
+                <LogIn size={18} />
+                <span className="hidden md:inline">Connexion</span>
+              </button>
             )}
-          </button>
+          </div>
         </div>
       </div>
     </header>

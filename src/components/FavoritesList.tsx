@@ -1,16 +1,21 @@
 import React from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 import { useYoutube } from '../context/YoutubeContext';
 
 const FavoritesList: React.FC = () => {
-  const { favorites, removeFavorite, setSelectedChannel, selectedChannel } = useYoutube();
+  const { favorites, removeFavorite, setSelectedChannel, selectedChannel, currentUser } = useYoutube();
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Favorite Channels</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Chaînes Favorites</h2>
       </div>
-      {favorites.length > 0 ? (
+      {!currentUser && (
+        <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+          <p>Connectez-vous pour voir vos chaînes favorites</p>
+        </div>
+      )}
+      {currentUser && favorites.length > 0 ? (
         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
           {favorites.map((channel) => (
             <li key={channel.id} className="relative">
@@ -40,7 +45,7 @@ const FavoritesList: React.FC = () => {
                     removeFavorite(channel.id);
                   }}
                   className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                  aria-label={`Remove ${channel.title}`}
+                  aria-label={`Supprimer ${channel.title}`}
                 >
                   <Trash2 size={16} />
                 </button>
@@ -48,11 +53,17 @@ const FavoritesList: React.FC = () => {
             </li>
           ))}
         </ul>
-      ) : (
-        <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-          <p>No favorite channels yet</p>
+      ) : currentUser ? (
+        <div className="p-6 text-center">
+          <div className="text-gray-400 dark:text-gray-500 mb-3">
+            <Plus size={40} className="mx-auto" />
+          </div>
+          <p className="text-gray-500 dark:text-gray-400 mb-2">Pas encore de chaînes favorites</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            Utilisez la barre de recherche ci-dessus pour trouver et ajouter vos chaînes YouTube préférées
+          </p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

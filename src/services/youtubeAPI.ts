@@ -6,15 +6,16 @@ const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 const BASE_URL = 'https://www.googleapis.com/youtube/v3';
 
 // Get date from one month ago
-const getOneMonthAgo = () => {
-  const date = new Date();
-  date.setMonth(date.getMonth() - 1);
-  return date.toISOString();
-};
+// const getOneMonthAgo = () => { // Commentée car non utilisée et cause un avertissement
+//   const date = new Date();
+//   date.setMonth(date.getMonth() - 1);
+//   return date.toISOString();
+// };
 
 export const youtubeAPI = {
   // Search for YouTube channels
   searchChannels: async (query: string): Promise<Channel[]> => {
+    console.info(`[youtubeAPI] Searching channels for query: "${query}"`);
     try {
       const response = await fetch(
         `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(
@@ -23,17 +24,19 @@ export const youtubeAPI = {
       );
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch channels: ${response.status}`);
+        const errorText = await response.text();
+        console.error(`[youtubeAPI] Failed to fetch channels. Status: ${response.status} ${response.statusText}. Response: ${errorText}`);
+        throw new Error(`Failed to fetch channels: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
 
-      if (!data.items || data.items.length === 0) { // Vérifier aussi si items est vide
-        // return getMockChannels(query); // Commenter cette ligne
-        // throw new Error('No items found in API response'); // L'API peut ne rien trouver, ce n'est pas une erreur en soi
-        return []; // Retourner un tableau vide si aucune chaîne n'est trouvée
+      if (!data.items) {
+        console.warn('[youtubeAPI] No items found in API response for searchChannels.');
+        return []; 
       }
-
+      
+      console.log(`[youtubeAPI] Found ${data.items.length} channels for query "${query}".`);
       return data.items.map((item: any) => ({
         id: item.id.channelId,
         title: item.snippet.title,
@@ -49,42 +52,46 @@ export const youtubeAPI = {
 
   // Get latest videos from each channel (Optimized for quota)
   getLatestVideos: async (channelIds: string[]): Promise<Video[]> => {
+    console.info(`[youtubeAPI] Fetching latest videos for channel IDs: ${channelIds.join(', ')}`);
+    if (channelIds.length === 0) {
+      console.log('[youtubeAPI] No channel IDs provided to getLatestVideos.');
+      return [];
+    }
     try {
       const allVideos: Video[] = [];
-      // const oneMonthAgo = getOneMonthAgo(); // Plus nécessaire pour la requête API directe
 
       for (const channelId of channelIds) {
+        console.log(`[youtubeAPI] Processing channel ID: ${channelId}`);
         try {
           // 1. Get the uploads playlist ID for the channel
+          console.log(`[youtubeAPI] Fetching channel details for ID: ${channelId}`);
           const channelDetailsResponse = await fetch(
             `${BASE_URL}/channels?part=contentDetails&id=${channelId}&key=${API_KEY}`
           );
 
           if (!channelDetailsResponse.ok) {
-            console.warn(`Failed to fetch channel details for ${channelId}: ${channelDetailsResponse.status}`);
-            // const mockVideos = getMockVideos([channelId]); // Fallback commenté
-            // allVideos.push(...mockVideos);
+            const errorText = await channelDetailsResponse.text();
+            console.warn(`[youtubeAPI] Failed to fetch channel details for ${channelId}. Status: ${channelDetailsResponse.status} ${channelDetailsResponse.statusText}. Response: ${errorText}`);
             continue;
           }
 
           const channelData = await channelDetailsResponse.json();
           if (!channelData.items || channelData.items.length === 0 || !channelData.items[0].contentDetails?.relatedPlaylists?.uploads) {
-            console.warn(`Could not find uploads playlist for channel ${channelId}`);
-            // const mockVideos = getMockVideos([channelId]); // Fallback commenté
-            // allVideos.push(...mockVideos);
+            console.warn(`[youtubeAPI] Could not find uploads playlist for channel ${channelId}. Data:`, channelData);
             continue;
           }
           const uploadsPlaylistId = channelData.items[0].contentDetails.relatedPlaylists.uploads;
+          console.log(`[youtubeAPI] Found uploads playlist ID ${uploadsPlaylistId} for channel ${channelId}`);
 
           // 2. Get the latest video from the uploads playlist
+          console.log(`[youtubeAPI] Fetching latest video from playlist ID: ${uploadsPlaylistId}`);
           const playlistItemsResponse = await fetch(
             `${BASE_URL}/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=1&key=${API_KEY}`
           );
 
           if (!playlistItemsResponse.ok) {
-            console.warn(`Failed to fetch videos for playlist ${uploadsPlaylistId} (channel ${channelId}): ${playlistItemsResponse.status}`);
-            // const mockVideos = getMockVideos([channelId]); // Fallback commenté
-            // allVideos.push(...mockVideos);
+            const errorText = await playlistItemsResponse.text();
+            console.warn(`[youtubeAPI] Failed to fetch videos for playlist ${uploadsPlaylistId} (channel ${channelId}). Status: ${playlistItemsResponse.status} ${playlistItemsResponse.statusText}. Response: ${errorText}`);
             continue;
           }
 
@@ -92,12 +99,7 @@ export const youtubeAPI = {
 
           if (playlistData.items && playlistData.items.length > 0) {
             const videoItem = playlistData.items[0].snippet;
-            // Filtrer ici si la vidéo est plus vieille qu'un mois, si nécessaire
-            // const videoDate = new Date(videoItem.publishedAt);
-            // if (videoDate < new Date(oneMonthAgo)) {
-            //   continue;
-            // }
-            
+            console.log(`[youtubeAPI] Found video "${videoItem.title}" for channel ${channelId}`);
             allVideos.push({
               id: videoItem.resourceId.videoId,
               title: videoItem.title,
@@ -109,20 +111,18 @@ export const youtubeAPI = {
               channelThumbnail: '', // Sera rempli par le contexte
             });
           }
-        } catch (channelError) {
-          console.warn(`Error processing channel ${channelId}:`, channelError);
-          // const mockVideos = getMockVideos([channelId]); // Fallback commenté
-          // allVideos.push(...mockVideos);
+        } catch (channelError: any) {
+          console.warn(`[youtubeAPI] Error processing channel ${channelId}:`, channelError.message || channelError);
         }
       }
 
+      console.log(`[youtubeAPI] Successfully fetched ${allVideos.length} videos in total.`);
       return allVideos.sort(
         (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
       );
-    } catch (error) {
-      console.error('Error in getLatestVideos:', error);
-      // return getMockVideos(channelIds); // Fallback commenté
-      throw error; // Propager l'erreur pour une meilleure gestion dans le contexte
+    } catch (error: any) {
+      console.error('[youtubeAPI] Error in getLatestVideos global catch:', error.message || error);
+      throw error;
     }
   },
 };
