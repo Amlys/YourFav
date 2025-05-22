@@ -166,18 +166,22 @@ export const YoutubeProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setError(null);
     try {
       const userDocRef = doc(db, 'users', currentUser.uid);
-      
+      // Récupérer les vraies infos de la chaîne (miniature haute qualité)
+      const detailedChannel = await youtubeAPI.getChannelDetails(channel.id);
+      if (!detailedChannel) {
+        setError("Impossible de récupérer les informations détaillées de la chaîne.");
+        setIsLoading(false);
+        return;
+      }
       // Vérifier d'abord si le document utilisateur existe
       const docSnap = await getDoc(userDocRef);
-      
       // Si le document n'existe pas, le créer avant d'ajouter le favori
       if (!docSnap.exists()) {
         console.log(`[YoutubeContext] Creating new user document for user ${currentUser.uid} before adding favorite.`);
-        await setDoc(userDocRef, { favorites: [channel] });
+        await setDoc(userDocRef, { favorites: [detailedChannel] });
         console.log(`[YoutubeContext] Channel ${channel.id} added to favorites for new user ${currentUser.uid}`);
         return; // Le listener onSnapshot va mettre à jour l'état
       }
-      
       // Vérifier si le favori existe déjà
       const userData = docSnap.data();
       const existingFavorites = userData.favorites || [];
@@ -186,21 +190,20 @@ export const YoutubeProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setIsLoading(false);
         return;
       }
-      
       // Ajouter le favori
       console.log(`[YoutubeContext] Adding channel ${channel.id} to favorites for user ${currentUser.uid}`);
       await updateDoc(userDocRef, {
-        favorites: arrayUnion(channel)
+        favorites: arrayUnion(detailedChannel)
       });
       console.log(`[YoutubeContext] Channel ${channel.id} added to favorites for user ${currentUser.uid}`);
       // L'état local des favoris sera mis à jour par le listener onSnapshot
     } catch (e: any) {
       console.error(`[YoutubeContext] Error adding favorite ${channel.id} for user ${currentUser.uid}:`, e.message || e);
-      setError(e.message || 'Échec de l\'ajout de la chaîne aux favoris');
+      setError(e.message || "Échec de l'ajout de la chaîne aux favoris");
     } finally {
       setIsLoading(false);
     }
-  }, [currentUser]); // Supprimé favorites des dépendances car nous utilisons getDoc maintenant
+  }, [currentUser]);
 
   const removeFavorite = useCallback(async (channelId: string) => {
     if (!currentUser) {

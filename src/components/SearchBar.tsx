@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Search, AlertCircle, Plus } from 'lucide-react';
-import { useYoutube } from '../context/YoutubeContext';
-import { Channel } from '../types';
+import { Search, AlertCircle, Plus, User } from 'lucide-react';
+import { useYoutube } from '../context/YoutubeContext.tsx';
+import { Channel } from '../types.ts';
 
 const SearchBar: React.FC = () => {
   const { searchChannels, addFavorite, searchResults, isLoading, error, clearError, currentUser } = useYoutube();
   const [query, setQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [addingFavorite, setAddingFavorite] = useState<string | null>(null);
+  const [brokenThumbnails, setBrokenThumbnails] = useState<string[]>([]);
 
   // Log pour déboguer l'état du composant
   console.log("[SearchBar] Rendering. State:", {
@@ -101,17 +102,24 @@ const SearchBar: React.FC = () => {
       {showResults && searchResults && searchResults.length > 0 && !error && (
         <div className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden searchbar-results-list"> {/* Ajout d'une classe pour le listener de clic extérieur */} 
           <div className="max-h-96 overflow-y-auto">
-            {searchResults.map((channel) => (
+            {searchResults.map((channel: Channel) => (
               <div
                 key={channel.id}
                 className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <div className="flex items-center space-x-3">
-                  <img
-                    src={channel.thumbnail}
-                    alt={channel.title}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+                  {channel.thumbnail && !brokenThumbnails.includes(channel.id) ? (
+                    <img
+                      src={channel.thumbnail}
+                      alt={channel.title}
+                      className="w-10 h-10 rounded-full object-cover"
+                      onError={() => setBrokenThumbnails((prev) => [...prev, channel.id])}
+                    />
+                  ) : (
+                    <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
+                      <User size={28} className="text-gray-400 dark:text-gray-500" />
+                    </div>
+                  )}
                   <div>
                     <h3 className="text-gray-900 dark:text-white font-medium">{channel.title}</h3>
                     <p className="text-gray-500 dark:text-gray-300 text-sm truncate">{channel.description}</p>

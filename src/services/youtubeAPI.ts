@@ -124,6 +124,27 @@ export const youtubeAPI = {
       throw error;
     }
   },
+
+  // Récupère les infos détaillées d'une chaîne (dont la vraie miniature)
+  getChannelDetails: async (channelId: string): Promise<Channel | null> => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/channels?part=snippet&id=${channelId}&key=${API_KEY}`
+      );
+      const data = await response.json();
+      if (!data.items || data.items.length === 0) return null;
+      const snippet = data.items[0].snippet;
+      return {
+        id: channelId,
+        title: snippet.title,
+        description: snippet.description,
+        thumbnail: snippet.thumbnails.high?.url || snippet.thumbnails.medium?.url || snippet.thumbnails.default?.url || '',
+      };
+    } catch (error) {
+      console.error('[youtubeAPI] Error in getChannelDetails:', error);
+      return null;
+    }
+  },
 };
 
 // Mock data functions for development (peuvent être supprimées si plus utilisées)
