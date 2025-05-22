@@ -14,6 +14,7 @@ const VideoFeed: React.FC = () => {
     fetchLatestVideos, // Garder pour le rafraîchissement manuel
   } = useYoutube();
   const [refreshing, setRefreshing] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -22,7 +23,7 @@ const VideoFeed: React.FC = () => {
     setTimeout(() => setRefreshing(false), 1000);
   };
 
-  const filteredVideos = selectedChannel 
+  const filteredVideos = selectedChannel && !showAll
     ? videos.filter(video => video.channelId === selectedChannel)
     : videos;
 
@@ -56,14 +57,32 @@ const VideoFeed: React.FC = () => {
             ? `Vidéos récentes de ${selectedChannelName}` 
             : 'Vidéos récentes'}
         </h2>
-        <button
-          onClick={handleRefresh}
-          disabled={isLoading || refreshing}
-          className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-          aria-label="Rafraîchir le flux"
-        >
-          <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={isLoading || refreshing}
+            className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            aria-label="Rafraîchir le flux"
+          >
+            <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+          </button>
+          {selectedChannel && !showAll && (
+            <button
+              onClick={() => setShowAll(true)}
+              className="ml-2 px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700 text-sm transition-colors"
+            >
+              Voir toutes les vidéos
+            </button>
+          )}
+          {showAll && (
+            <button
+              onClick={() => setShowAll(false)}
+              className="ml-2 px-3 py-1 rounded bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-400 dark:hover:bg-gray-600 text-sm transition-colors"
+            >
+              Filtrer par chaîne
+            </button>
+          )}
+        </div>
       </div>
 
       {isLoading ? (

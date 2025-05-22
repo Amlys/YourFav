@@ -98,7 +98,40 @@ export const youtubeAPI = {
 
           if (playlistData.items && playlistData.items.length > 0) {
             const videoItem = playlistData.items[0].snippet;
-            console.log(`[youtubeAPI] Found video "${videoItem.title}" for channel ${channelId}`);
+            // Filtrer les Shorts :
+            const isShort =
+              videoItem.title.toLowerCase().includes('shorts') ||
+              videoItem.description.toLowerCase().includes('shorts') ||
+              (videoItem.thumbnails &&
+                (videoItem.thumbnails.high?.url?.includes('/shorts/') ||
+                 videoItem.thumbnails.medium?.url?.includes('/shorts/') ||
+                 videoItem.thumbnails.default?.url?.includes('/shorts/')));
+            if (isShort) {
+              console.log(`[youtubeAPI] Video "${videoItem.title}" ignorée car c'est un Short.`);
+              continue;
+            }
+            // Récupérer la durée de la vidéo
+            const videoId = videoItem.resourceId.videoId;
+            const videoDetailsResponse = await fetch(
+              `${BASE_URL}/videos?part=contentDetails&id=${videoId}&key=${API_KEY}`
+            );
+            if (!videoDetailsResponse.ok) {
+              const errorText = await videoDetailsResponse.text();
+              console.warn(`[youtubeAPI] Failed to fetch video details for ${videoId}. Status: ${videoDetailsResponse.status} ${videoDetailsResponse.statusText}. Response: ${errorText}`);
+              continue;
+            }
+            const videoDetailsData = await videoDetailsResponse.json();
+            if (!videoDetailsData.items || videoDetailsData.items.length === 0) {
+              console.warn(`[youtubeAPI] No details found for video ${videoId}`);
+              continue;
+            }
+            const durationISO = videoDetailsData.items[0].contentDetails.duration;
+            // Convertir la durée ISO 8601 en secondes
+            const durationSeconds = parseISODurationToSeconds(durationISO);
+            if (durationSeconds <= 180) {
+              console.log(`[youtubeAPI] Video "${videoItem.title}" ignorée car durée <= 3min (${durationSeconds}s)`);
+              continue;
+            }
             allVideos.push({
               id: videoItem.resourceId.videoId,
               title: videoItem.title,
@@ -114,7 +147,15 @@ export const youtubeAPI = {
           console.warn(`[youtubeAPI] Error processing channel ${channelId}:`, channelError.message || channelError);
         }
       }
-
+      // Fonction utilitaire pour convertir une durée ISO 8601 en secondes
+      function parseISODurationToSeconds(duration: string): number {
+        const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+        if (!match) return 0;
+        const hours = parseInt(match[1] || '0', 10);
+        const minutes = parseInt(match[2] || '0', 10);
+        const seconds = parseInt(match[3] || '0', 10);
+        return hours * 3600 + minutes * 60 + seconds;
+      }
       console.log(`[youtubeAPI] Successfully fetched ${allVideos.length} videos in total.`);
       return allVideos.sort(
         (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
