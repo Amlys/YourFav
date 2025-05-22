@@ -1,6 +1,7 @@
 import React from 'react';
-import { Trash2, Plus } from 'lucide-react';
-import { useYoutube } from '../context/YoutubeContext';
+import { Trash2, Plus, User } from 'lucide-react';
+import { useYoutube } from '../context/YoutubeContext.tsx';
+import { Channel } from '../types.ts';
 
 const FavoritesList: React.FC = () => {
   const { favorites, removeFavorite, setSelectedChannel, selectedChannel, currentUser } = useYoutube();
@@ -17,7 +18,7 @@ const FavoritesList: React.FC = () => {
       )}
       {currentUser && favorites.length > 0 ? (
         <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-          {favorites.map((channel) => (
+          {favorites.map((channel: Channel) => (
             <li key={channel.id} className="relative">
               <div 
                 className={`p-4 flex items-center space-x-3 cursor-pointer transition-colors ${
@@ -28,11 +29,18 @@ const FavoritesList: React.FC = () => {
                 onClick={() => setSelectedChannel(channel.id)}
               >
                 <div className="flex-shrink-0">
-                  <img
-                    src={channel.thumbnail}
-                    alt={channel.title}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+                  {channel.thumbnail ? (
+                    <img
+                      src={channel.thumbnail}
+                      alt={channel.title}
+                      className="w-10 h-10 rounded-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
+                      <User size={28} className="text-gray-400 dark:text-gray-500" />
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 dark:text-white truncate">

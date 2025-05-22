@@ -1,7 +1,6 @@
 import { Channel, Video } from '../types';
 
 // YouTube API key
-// const API_KEY = 'AIzaSyCk16nXD7Lf9FoQIQXPZVJxpKVZ6HLrfd0'; // Ancienne clé
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 const BASE_URL = 'https://www.googleapis.com/youtube/v3';
 
@@ -41,7 +40,7 @@ export const youtubeAPI = {
         id: item.id.channelId,
         title: item.snippet.title,
         description: item.snippet.description,
-        thumbnail: item.snippet.thumbnails.default.url,
+        thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url || '',
       }));
     } catch (error) {
       console.error('Error in searchChannels:', error);
