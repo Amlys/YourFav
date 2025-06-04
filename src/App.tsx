@@ -6,6 +6,8 @@ import Header from './components/Header';
 import { AppProvider } from './contexts/AppProvider';
 import { useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AppErrorBoundary, PageErrorBoundary } from './components/ErrorBoundary';
+import { useGlobalErrorHandler } from './hooks/useErrorHandler';
 
 // Composant pour protéger les routes qui nécessitent une authentification
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -46,31 +48,42 @@ const AuthenticatedLayout: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 function App() {
+  // Initialize global error handling
+  useGlobalErrorHandler();
+  
   return (
-    <BrowserRouter>
-      <ThemeProvider>
-        <AppProvider>
-          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-            <Routes>
-              {/* La landing page est accessible à tous et est la route par défaut */}
-              <Route path="/" element={<LandingPage />} />
-              
-              {/* Routes protégées qui nécessitent une authentification */}
-              <Route path="/home" element={
-                <ProtectedRoute>
-                  <AuthenticatedLayout>
-                    <HomePage />
-                  </AuthenticatedLayout>
-                </ProtectedRoute>
-              } />
-              
-              {/* Rediriger toutes les autres routes vers la landing page */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
-        </AppProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+    <AppErrorBoundary>
+      <BrowserRouter>
+        <ThemeProvider>
+          <AppProvider>
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+              <Routes>
+                {/* La landing page est accessible à tous et est la route par défaut */}
+                <Route path="/" element={
+                  <PageErrorBoundary>
+                    <LandingPage />
+                  </PageErrorBoundary>
+                } />
+                
+                {/* Routes protégées qui nécessitent une authentification */}
+                <Route path="/home" element={
+                  <ProtectedRoute>
+                    <AuthenticatedLayout>
+                      <PageErrorBoundary>
+                        <HomePage />
+                      </PageErrorBoundary>
+                    </AuthenticatedLayout>
+                  </ProtectedRoute>
+                } />
+                
+                {/* Rediriger toutes les autres routes vers la landing page */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+          </AppProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </AppErrorBoundary>
   );
 }
 

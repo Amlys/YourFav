@@ -95,12 +95,9 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       const userDocRef = doc(db, 'users', currentUser.uid);
       
-      // Récupérer les vraies infos de la chaîne (miniature haute qualité)
-      const detailedChannel = await youtubeAPI.getChannelDetails(channel.id);
-      if (!detailedChannel) {
-        setError("Impossible de récupérer les informations détaillées de la chaîne.");
-        return;
-      }
+      // Utiliser directement la chaîne fournie (qui vient déjà de la recherche avec les bonnes infos)
+      console.log(`[FavoritesContext] Adding channel to favorites:`, channel);
+      const detailedChannel = channel;
       
       // Vérifier d'abord si le document utilisateur existe
       const docSnap = await getDoc(userDocRef);

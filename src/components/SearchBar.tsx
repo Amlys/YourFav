@@ -104,43 +104,64 @@ const SearchBar: React.FC = () => {
       )}
 
       {showResults && searchResults && searchResults.length > 0 && !error && (
-        <div className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden searchbar-results-list"> {/* Ajout d'une classe pour le listener de clic extérieur */} 
+        <div className="absolute z-10 w-full mt-2 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-hidden searchbar-results-list">
           <div className="max-h-96 overflow-y-auto">
             {searchResults.map((channel: Channel) => (
               <div
                 key={channel.id}
-                className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors min-w-0"
               >
-                <div className="flex items-center space-x-3">
+                {/* Miniature de la chaîne */}
+                <div className="flex-shrink-0">
                   {channel.thumbnail && !brokenThumbnails.includes(channel.id) ? (
                     <img
                       src={channel.thumbnail}
                       alt={channel.title}
-                      className="w-10 h-10 rounded-full object-cover"
-                      onError={() => setBrokenThumbnails((prev) => [...prev, channel.id])}
+                      className="w-12 h-12 rounded-full object-cover"
+                      onError={(e) => {
+                        console.log(`[SearchBar] Image failed to load for ${channel.title}: ${channel.thumbnail}`);
+                        setBrokenThumbnails((prev) => [...prev, channel.id]);
+                      }}
                     />
                   ) : (
-                    <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
-                      <User size={28} className="text-gray-400 dark:text-gray-500" />
+                    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
+                      <User size={24} className="text-gray-400 dark:text-gray-500" />
                     </div>
                   )}
-                  <div>
-                    <h3 className="text-gray-900 dark:text-white font-medium">{channel.title}</h3>
-                    <p className="text-gray-500 dark:text-gray-300 text-sm truncate">{channel.description}</p>
-                  </div>
                 </div>
-                <button
-                  onClick={() => handleAddFavorite(channel)}
-                  disabled={addingFavorite === channel.id}
-                  className="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white p-2 rounded-full flex items-center justify-center disabled:opacity-50"
-                  aria-label={`Ajouter ${channel.title} aux favoris`}
-                >
-                  {addingFavorite === channel.id ? (
-                    <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <Plus size={18} />
+                
+                {/* Informations de la chaîne */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-gray-900 dark:text-white font-medium text-sm leading-5 mb-1 truncate">
+                    {channel.title}
+                  </h3>
+                  {channel.description && (
+                    <p className="text-gray-500 dark:text-gray-400 text-xs leading-4 overflow-hidden">
+                      <span className="block max-h-8 overflow-hidden">
+                        {channel.description.length > 120 
+                          ? channel.description.substring(0, 120) + '...' 
+                          : channel.description
+                        }
+                      </span>
+                    </p>
                   )}
-                </button>
+                </div>
+                
+                {/* Bouton d'ajout */}
+                <div className="flex-shrink-0">
+                  <button
+                    onClick={() => handleAddFavorite(channel)}
+                    disabled={addingFavorite === channel.id}
+                    className="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white p-2 rounded-full flex items-center justify-center disabled:opacity-50 transition-colors"
+                    aria-label={`Ajouter ${channel.title} aux favoris`}
+                  >
+                    {addingFavorite === channel.id ? (
+                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Plus size={16} />
+                    )}
+                  </button>
+                </div>
               </div>
             ))}
           </div>

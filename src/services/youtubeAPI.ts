@@ -11,6 +11,7 @@ import {
   validateChannel
 } from '../types/schemas';
 import { ValidationService } from './validation';
+import { transformAndValidateChannels } from './transformers';
 
 // YouTube API key
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
@@ -50,66 +51,157 @@ export const youtubeAPI = {
       }
 
       const data = await response.json();
+      console.log(`[youtubeAPI] Raw search response:`, JSON.stringify(data, null, 2));
 
-      if (!data.items) {
+      if (!data.items || data.items.length === 0) {
         console.warn('[youtubeAPI] No items found in API response for searchChannels.');
         return []; 
       }
-      // Récupérer les vrais thumbnails via l'API channels
-      const channelIds = data.items.map((item: any) => item.id.channelId).filter(Boolean);
-      if (channelIds.length === 0) return [];
+
+      console.log(`[youtubeAPI] Found ${data.items.length} raw search results`);
+      
+      // Extraire les channel IDs et les données de base
+      const channelIds = data.items.map((item: any) => item.id?.channelId).filter(Boolean);
+      console.log(`[youtubeAPI] Extracted channel IDs:`, channelIds);
+      
+      if (channelIds.length === 0) {
+        console.warn('[youtubeAPI] No valid channel IDs found');
+        return [];
+      }
+
+      // Récupérer les détails complets des chaînes pour avoir les vraies miniatures
+      console.log(`[youtubeAPI] Fetching detailed channel information for ${channelIds.length} channels`);
       const channelsDetailsResponse = await fetch(
         `${BASE_URL}/channels?part=snippet&id=${channelIds.join(',')}&key=${API_KEY}`
       );
+
+      if (!channelsDetailsResponse.ok) {
+        console.warn(`[youtubeAPI] Failed to fetch channel details, falling back to search results`);
+        
+        // Fallback: utiliser les données de search directement avec logs de débogage
+        const fallbackChannels: Channel[] = [];
+        
+        for (const item of data.items) {
+          if (item.id?.channelId && item.snippet?.title) {
+            const thumbnailUrl = item.snippet.thumbnails?.high?.url || 
+                                item.snippet.thumbnails?.medium?.url || 
+                                item.snippet.thumbnails?.default?.url || 
+                                '';
+            
+            console.log(`[youtubeAPI] Creating fallback channel for ${item.snippet.title} with thumbnail: ${thumbnailUrl}`);
+            
+            const channel: Channel = {
+              id: item.id.channelId,
+              title: item.snippet.title,
+              description: item.snippet.description || '',
+              thumbnail: thumbnailUrl,
+            };
+            fallbackChannels.push(channel);
+          }
+        }
+        
+        console.log(`[youtubeAPI] Created ${fallbackChannels.length} fallback channels`);
+        
+        // Cache les résultats de fallback
+        if (fallbackChannels.length > 0) {
+          cache.set(cacheKey, fallbackChannels, CACHE_TTL.SEARCH_RESULTS);
+        }
+        
+        return fallbackChannels;
+      }
+
       const channelsDetailsData = await channelsDetailsResponse.json();
+      console.log(`[youtubeAPI] Channel details response:`, JSON.stringify(channelsDetailsData, null, 2));
+
+      if (!channelsDetailsData.items || channelsDetailsData.items.length === 0) {
+        console.warn('[youtubeAPI] No channel details found, using search results as fallback');
+        
+        // Même fallback que ci-dessus avec logs de débogage
+        const fallbackChannels: Channel[] = [];
+        
+        for (const item of data.items) {
+          if (item.id?.channelId && item.snippet?.title) {
+            const thumbnailUrl = item.snippet.thumbnails?.high?.url || 
+                                item.snippet.thumbnails?.medium?.url || 
+                                item.snippet.thumbnails?.default?.url || 
+                                '';
+            
+            console.log(`[youtubeAPI] Creating fallback channel for ${item.snippet.title} with thumbnail: ${thumbnailUrl}`);
+            
+            const channel: Channel = {
+              id: item.id.channelId,
+              title: item.snippet.title,
+              description: item.snippet.description || '',
+              thumbnail: thumbnailUrl,
+            };
+            fallbackChannels.push(channel);
+          }
+        }
+        
+        console.log(`[youtubeAPI] Created ${fallbackChannels.length} fallback channels from search`);
+        
+        if (fallbackChannels.length > 0) {
+          cache.set(cacheKey, fallbackChannels, CACHE_TTL.SEARCH_RESULTS);
+        }
+        
+        return fallbackChannels;
+      }
+
+      // Créer le mapping des thumbnails haute qualité depuis les détails des chaînes
       const detailsMap = new Map();
-      if (channelsDetailsData.items) {
-        for (const ch of channelsDetailsData.items) {
-          detailsMap.set(ch.id, ch.snippet.thumbnails.high?.url || ch.snippet.thumbnails.medium?.url || ch.snippet.thumbnails.default?.url || '');
+      for (const ch of channelsDetailsData.items) {
+        const highQualityThumbnail = ch.snippet.thumbnails?.high?.url || 
+                                   ch.snippet.thumbnails?.medium?.url || 
+                                   ch.snippet.thumbnails?.default?.url || 
+                                   '';
+        
+        console.log(`[youtubeAPI] Channel ${ch.id} (${ch.snippet.title}) has thumbnail: ${highQualityThumbnail}`);
+        
+        detailsMap.set(ch.id, {
+          thumbnail: highQualityThumbnail,
+          description: ch.snippet.description || '',
+        });
+      }
+
+      // Créer les objets Channel finaux en combinant search et détails
+      const results: Channel[] = [];
+      
+      for (const item of data.items) {
+        if (item.id?.channelId && item.snippet?.title) {
+          const channelId = item.id.channelId;
+          const details = detailsMap.get(channelId) || {};
+          
+          // Priorité aux thumbnails des détails, puis fallback sur search
+          const finalThumbnail = details.thumbnail || 
+                                item.snippet.thumbnails?.high?.url || 
+                                item.snippet.thumbnails?.medium?.url || 
+                                item.snippet.thumbnails?.default?.url || 
+                                '';
+          
+          console.log(`[youtubeAPI] Final channel ${item.snippet.title} thumbnail: ${finalThumbnail}`);
+          
+          const channel: Channel = {
+            id: channelId,
+            title: item.snippet.title,
+            description: details.description || item.snippet.description || '',
+            thumbnail: finalThumbnail,
+          };
+          
+          results.push(channel);
         }
       }
-      // Valider la réponse avec Zod
-      const validationResult = ValidationService.validate(
-        YouTubeSearchResponseSchema, 
-        data, 
-        `YouTube Search API for query: ${query}`
-      );
-
-      if (!validationResult.success) {
-        console.error('[youtubeAPI] Failed to validate search response:', validationResult.error);
-        throw new Error(validationResult.error.message);
-      }
-
-      const validatedData = validationResult.data;
       
-      // Transformer les données en format Channel
-      const rawResults = validatedData.items.map((item) => ({
-        id: item.id.channelId,
-        title: item.snippet.title,
-        description: item.snippet.description || '',
-        thumbnail: detailsMap.get(item.id.channelId) || '',
-      }));
-
-      // Valider chaque Channel individuellement
-      const channelsValidation = ValidationService.validateArrayPartial(
-        ChannelSchema,
-        rawResults,
-        'Search Results Channels'
-      );
-
-      if (channelsValidation.successRate < 0.5) {
-        console.warn(`[youtubeAPI] Low success rate in channel validation: ${Math.round(channelsValidation.successRate * 100)}%`);
-      }
-
-      const results = channelsValidation.validItems;
+      console.log(`[youtubeAPI] Successfully created ${results.length} channel objects`);
       
       // Cache the results
-      cache.set(cacheKey, results, CACHE_TTL.SEARCH_RESULTS);
-      console.info(`[youtubeAPI] Cached ${results.length} validated search results for query: "${query}"`);
+      if (results.length > 0) {
+        cache.set(cacheKey, results, CACHE_TTL.SEARCH_RESULTS);
+        console.info(`[youtubeAPI] Cached ${results.length} search results for query: "${query}"`);
+      }
       
       return results;
     } catch (error) {
-      console.error('Error in searchChannels:', error);
+      console.error('[youtubeAPI] Error in searchChannels:', error);
       throw error; // Propager l'erreur
     }
   },
@@ -279,10 +371,10 @@ export const youtubeAPI = {
     }
   },
 
-    },
-
   // Récupère les infos détaillées d'une chaîne (dont la vraie miniature)
   getChannelDetails: async (channelId: string): Promise<Channel | null> => {
+    console.info(`[youtubeAPI] Fetching channel details for: ${channelId}`);
+    
     // Check cache first
     const cacheKey = cacheKeys.channelDetails(channelId);
     const cachedChannel = cache.get<Channel>(cacheKey);
@@ -295,15 +387,35 @@ export const youtubeAPI = {
       const response = await fetch(
         `${BASE_URL}/channels?part=snippet&id=${channelId}&key=${API_KEY}`
       );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[youtubeAPI] Failed to fetch channel details for ${channelId}. Status: ${response.status} ${response.statusText}. Response: ${errorText}`);
+        return null;
+      }
+
       const data = await response.json();
-      if (!data.items || data.items.length === 0) return null;
-      const snippet = data.items[0].snippet;
-      const channelDetails = {
-        id: channelId,
-        title: snippet.title,
-        description: snippet.description,
-        thumbnail: snippet.thumbnails.high?.url || snippet.thumbnails.medium?.url || snippet.thumbnails.default?.url || '',
+      console.log(`[youtubeAPI] Channel details raw response for ${channelId}:`, JSON.stringify(data, null, 2));
+      
+      if (!data.items || data.items.length === 0) {
+        console.warn(`[youtubeAPI] No channel found for ID: ${channelId}`);
+        return null;
+      }
+      
+      const channelData = data.items[0];
+      
+      // Construire manuellement l'objet Channel comme dans searchChannels
+      const channelDetails: Channel = {
+        id: channelData.id,
+        title: channelData.snippet?.title || '',
+        description: channelData.snippet?.description || '',
+        thumbnail: channelData.snippet?.thumbnails?.high?.url || 
+                  channelData.snippet?.thumbnails?.medium?.url || 
+                  channelData.snippet?.thumbnails?.default?.url || 
+                  '',
       };
+      
+      console.log(`[youtubeAPI] Successfully created channel details for ${channelData.snippet?.title}:`, channelDetails);
       
       // Cache the channel details
       cache.set(cacheKey, channelDetails, CACHE_TTL.CHANNEL_DETAILS);
@@ -311,7 +423,7 @@ export const youtubeAPI = {
       
       return channelDetails;
     } catch (error) {
-      console.error('[youtubeAPI] Error in getChannelDetails:', error);
+      console.error(`[youtubeAPI] Error in getChannelDetails for ${channelId}:`, error);
       return null;
     }
   },
