@@ -1,0 +1,18 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Ce projet est une application web.
+
+Avant de répondre à une demande, je vais réfléchir étape par étape et utiliser la chaine de pensées et analyser le code de l'application en profondeur et bien comprendre le contexte et la demande, et puis je réalises ce qu'il m'a été demandé.
+
+Il faut vérifier que les modules utilisés sont déjà installés et s'ils ne le sont pas alors il faut installer avec npm install les nouveaux modules pour continuer Quand j'ai une nouvelle dépendance ou nouveau module je l'installe automatiquement et l'ajouter au package.json
+
+Je ne lance pas plusieurs commandes à la fois, je lance une seule à la fois.
+
+Nous développons sous Windows. Veuillez générer toutes les commandes en utilisant la syntaxe batch (CMD) et éviter les commandes spécifiques à Unix/Linux comme ls, grep ou bash. Utilisez des commandes telles que dir, findstr et echo etc
+Utiliser un style concis et technique. 
+Gérer les états de chargement et d’erreur. 
+Éviter la répétition et le langage superflu. 
+

@@ -2,11 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Youtube, Moon, Sun, LogIn, LogOut } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import { useYoutube } from '../context/YoutubeContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const Header: React.FC = () => {
   const { darkMode, toggleDarkMode } = useTheme();
-  const { currentUser, signInWithGoogle, signOutUser } = useYoutube();
+  const { currentUser, signInWithGoogle, signOutUser } = useAuth();
 
   return (
     <header className="bg-white dark:bg-gray-800 shadow-sm">

@@ -1,11 +1,11 @@
 // filepath: c:\Users\LAM\Downloads\project\src\pages\LandingPage.tsx
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useYoutube } from '../context/YoutubeContext';
-import { Youtube, CheckCircle, ListVideo, Bell } from 'lucide-react'; // LogIn supprimé car SVG utilisé
+import { useAuth } from '../contexts/AuthContext';
+import { Youtube, CheckCircle, ListVideo, Bell } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
-  const { currentUser, signInWithGoogle, isAuthLoading } = useYoutube(); // Utiliser isAuthLoading
+  const { currentUser, signInWithGoogle, isAuthLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {

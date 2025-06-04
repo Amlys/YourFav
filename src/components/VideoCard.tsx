@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Play, Calendar, ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Video } from '../types';
+import OptimizedImage from './OptimizedImage';
+import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
 
 interface VideoCardProps {
   video: Video;
@@ -12,30 +14,59 @@ interface VideoCardProps {
   onRemoveLater?: () => void;
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ video, tab, onMarkWatched, onMarkLater, onRemoveWatched, onRemoveLater }) => {
+const VideoCard: React.FC<VideoCardProps> = React.memo(({ 
+  video, 
+  tab, 
+  onMarkWatched, 
+  onMarkLater, 
+  onRemoveWatched, 
+  onRemoveLater 
+}) => {
   const [isHovered, setIsHovered] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  
+  // Performance monitoring  
+  usePerformanceMonitor('VideoCard', {
+    trackRenderTime: true,
+    trackMemory: false,
+    logInterval: 10000,
+  });
 
-  const formatDate = (dateString: string) => {
+  // Mémoisation du formatage de date
+  const formattedDate = useMemo(() => {
     try {
-      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+      return formatDistanceToNow(new Date(video.publishedAt), { addSuffix: true });
     } catch (error) {
       return 'recently';
     }
-  };
+  }, [video.publishedAt]);
+
+  // Mémoisation des handlers pour éviter les re-créations
+  const handleMouseEnter = useCallback(() => setIsHovered(true), []);
+  const handleMouseLeave = useCallback(() => setIsHovered(false), []);
+  const handleOpenModal = useCallback(() => setModalOpen(true), []);
+  const handleCloseModal = useCallback(() => setModalOpen(false), []);
+
+  // Mémoisation des URL YouTube
+  const youtubeVideoUrl = useMemo(() => 
+    `https://www.youtube.com/watch?v=${video.id}`, [video.id]);
+  const youtubeEmbedUrl = useMemo(() => 
+    `https://www.youtube.com/embed/${video.id}`, [video.id]);
 
   return (
     <>
       <div 
         className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <div className="relative aspect-video bg-gray-200 dark:bg-gray-700">
-          <img 
-            src={video.thumbnail} 
-            alt={video.title} 
-            className="w-full h-full object-cover"
+          <OptimizedImage
+            src={video.thumbnail}
+            alt={video.title}
+            className="w-full h-full"
+            loading="lazy"
+            quality="medium"
           />
           <div 
             className={`absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center transition-opacity duration-300 ${
@@ -43,7 +74,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, tab, onMarkWatched, onMark
             }`}
           >
             <button
-              onClick={() => setModalOpen(true)}
+              onClick={handleOpenModal}
               className="bg-red-600 hover:bg-red-700 text-white rounded-full p-3 transform transition-transform duration-300 hover:scale-110"
               aria-label="Play video"
             >
@@ -61,10 +92,14 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, tab, onMarkWatched, onMark
           </h3>
           
           <div className="flex items-center mb-3">
-            <img 
-              src={video.channelThumbnail} 
-              alt={video.channelTitle} 
+            <OptimizedImage
+              src={video.channelThumbnail}
+              alt={video.channelTitle}
               className="w-6 h-6 rounded-full mr-2"
+              loading="lazy"
+              quality="low"
+              width={24}
+              height={24}
             />
             <span className="text-sm text-gray-700 dark:text-gray-300">
               {video.channelTitle}
@@ -73,7 +108,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, tab, onMarkWatched, onMark
           
           <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-2">
             <Calendar size={14} className="mr-1" />
-            <span>Published {formatDate(video.publishedAt)}</span>
+            <span>Published {formattedDate}</span>
           </div>
           
           <div className="flex gap-2 mt-2">
@@ -94,7 +129,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, tab, onMarkWatched, onMark
         
         <div className="px-4 pb-4">
           <a 
-            href={`https://www.youtube.com/watch?v=${video.id}`} 
+            href={youtubeVideoUrl} 
             target="_blank" 
             rel="noopener noreferrer"
             className="flex items-center text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
@@ -110,7 +145,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, tab, onMarkWatched, onMark
           <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden max-w-4xl w-full">
             <div className="relative pb-[56.25%] h-0">
               <iframe
-                src={`https://www.youtube.com/embed/${video.id}`}
+                src={youtubeEmbedUrl}
                 title={video.title}
                 className="absolute top-0 left-0 w-full h-full"
                 frameBorder="0"
@@ -123,18 +158,22 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, tab, onMarkWatched, onMark
                 {video.title}
               </h3>
               <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <img 
-                    src={video.channelThumbnail} 
-                    alt={video.channelTitle} 
-                    className="w-8 h-8 rounded-full mr-2"
-                  />
+                              <div className="flex items-center">
+                <OptimizedImage
+                  src={video.channelThumbnail}
+                  alt={video.channelTitle}
+                  className="w-8 h-8 rounded-full mr-2"
+                  loading="lazy"
+                  quality="low"
+                  width={32}
+                  height={32}
+                />
                   <span className="text-gray-700 dark:text-gray-300">
                     {video.channelTitle}
                   </span>
                 </div>
                 <button
-                  onClick={() => setModalOpen(false)}
+                  onClick={handleCloseModal}
                   className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
                 >
                   Close
@@ -146,6 +185,8 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, tab, onMarkWatched, onMark
       )}
     </>
   );
-};
+});
+
+VideoCard.displayName = 'VideoCard';
 
 export default VideoCard;

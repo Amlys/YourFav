@@ -1,49 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import VideoCard from './VideoCard';
-import { useYoutube } from '../context/YoutubeContext';
+import { useFavorites } from '../contexts/FavoritesContext';
+import { useVideos } from '../contexts/VideosContext';
+import { useSearch } from '../contexts/SearchContext';
 import { ExternalLink, RefreshCw, AlertCircle } from 'lucide-react';
 
 const VideoFeed: React.FC = () => {
+  const { favorites } = useFavorites();
+  const { selectedChannel } = useSearch();
   const { 
-    favorites, 
     videos, 
     isLoading, 
     error,
-    selectedChannel,
     clearError,
-    fetchLatestVideos, // Garder pour le rafraîchissement manuel
+    fetchLatestVideos,
     watchedVideoIds,
     laterVideoIds,
     markVideoWatched,
     markVideoLater,
     removeVideoFromWatched,
     removeVideoFromLater,
-  } = useYoutube();
+  } = useVideos();
   const [refreshing, setRefreshing] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [tab, setTab] = useState<'a_voir' | 'deja_vu' | 'plus_tard'>('a_voir');
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     clearError();
     await fetchLatestVideos();
     setTimeout(() => setRefreshing(false), 1000);
-  };
+  }, [clearError, fetchLatestVideos]);
 
-  let filteredVideos = videos;
-  if (tab === 'a_voir') {
-    filteredVideos = videos.filter(
-      v => !watchedVideoIds.includes(v.id) && !laterVideoIds.includes(v.id) && (showAll || !selectedChannel || v.channelId === selectedChannel)
-    );
-  } else if (tab === 'deja_vu') {
-    filteredVideos = videos.filter(v => watchedVideoIds.includes(v.id) && (showAll || !selectedChannel || v.channelId === selectedChannel));
-  } else if (tab === 'plus_tard') {
-    filteredVideos = videos.filter(v => laterVideoIds.includes(v.id) && (showAll || !selectedChannel || v.channelId === selectedChannel));
-  }
+  // Mémoisation des vidéos filtrées pour éviter les re-calculs inutiles
+  const filteredVideos = useMemo(() => {
+    if (tab === 'a_voir') {
+      return videos.filter(
+        v => !watchedVideoIds.includes(v.id) && 
+            !laterVideoIds.includes(v.id) && 
+            (showAll || !selectedChannel || v.channelId === selectedChannel)
+      );
+    } else if (tab === 'deja_vu') {
+      return videos.filter(
+        v => watchedVideoIds.includes(v.id) && 
+            (showAll || !selectedChannel || v.channelId === selectedChannel)
+      );
+    } else if (tab === 'plus_tard') {
+      return videos.filter(
+        v => laterVideoIds.includes(v.id) && 
+            (showAll || !selectedChannel || v.channelId === selectedChannel)
+      );
+    }
+    return videos;
+  }, [videos, tab, watchedVideoIds, laterVideoIds, showAll, selectedChannel]);
 
-  const selectedChannelName = selectedChannel 
-    ? favorites.find(f => f.id === selectedChannel)?.title 
-    : null;
+  // Mémoisation du nom de la chaîne sélectionnée
+  const selectedChannelName = useMemo(() => 
+    selectedChannel ? favorites.find(f => f.id === selectedChannel)?.title : null,
+    [selectedChannel, favorites]
+  );
+
+  // Mémoisation des handlers de changement d'onglet
+  const handleTabChange = useCallback((newTab: 'a_voir' | 'deja_vu' | 'plus_tard') => 
+    setTab(newTab), []);
+  
+  const handleShowAllToggle = useCallback(() => setShowAll(prev => !prev), []);
+
+  // Mémoisation des handlers de vidéo pour éviter les re-créations
+  const createVideoHandlers = useCallback((videoId: string) => ({
+    onMarkWatched: () => markVideoWatched(videoId),
+    onMarkLater: () => markVideoLater(videoId),
+    onRemoveWatched: () => removeVideoFromWatched(videoId),
+    onRemoveLater: () => removeVideoFromLater(videoId),
+  }), [markVideoWatched, markVideoLater, removeVideoFromWatched, removeVideoFromLater]);
 
   if (error) {
     return (
@@ -67,9 +96,9 @@ const VideoFeed: React.FC = () => {
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:justify-between md:items-center gap-2">
         <div className="flex items-center gap-2 mb-2 md:mb-0">
-          <button onClick={() => setTab('a_voir')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'a_voir' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>À voir</button>
-          <button onClick={() => setTab('deja_vu')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'deja_vu' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>Déjà visionnée</button>
-          <button onClick={() => setTab('plus_tard')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'plus_tard' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>Plus tard</button>
+          <button onClick={() => handleTabChange('a_voir')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'a_voir' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>À voir</button>
+          <button onClick={() => handleTabChange('deja_vu')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'deja_vu' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>Déjà visionnée</button>
+          <button onClick={() => handleTabChange('plus_tard')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'plus_tard' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>Plus tard</button>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -82,7 +111,7 @@ const VideoFeed: React.FC = () => {
           </button>
           {selectedChannel && !showAll && (
             <button
-              onClick={() => setShowAll(true)}
+              onClick={handleShowAllToggle}
               className="ml-2 px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700 text-sm transition-colors"
             >
               Voir toutes les vidéos
@@ -90,7 +119,7 @@ const VideoFeed: React.FC = () => {
           )}
           {showAll && (
             <button
-              onClick={() => setShowAll(false)}
+              onClick={handleShowAllToggle}
               className="ml-2 px-3 py-1 rounded bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-400 dark:hover:bg-gray-600 text-sm transition-colors"
             >
               Filtrer par chaîne
@@ -108,17 +137,17 @@ const VideoFeed: React.FC = () => {
         </div>
       ) : filteredVideos.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
-          {filteredVideos.map((video) => (
-            <VideoCard 
-              key={video.id} 
-              video={video} 
-              tab={tab}
-              onMarkWatched={() => markVideoWatched(video.id)}
-              onMarkLater={() => markVideoLater(video.id)}
-              onRemoveWatched={() => removeVideoFromWatched(video.id)}
-              onRemoveLater={() => removeVideoFromLater(video.id)}
-            />
-          ))}
+          {filteredVideos.map((video) => {
+            const handlers = createVideoHandlers(video.id);
+            return (
+              <VideoCard 
+                key={video.id} 
+                video={video} 
+                tab={tab}
+                {...handlers}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="p-8 text-center">

@@ -1,10 +1,14 @@
 import React from 'react';
 import { Trash2, Plus, User } from 'lucide-react';
-import { useYoutube } from '../context/YoutubeContext.tsx';
+import { useAuth } from '../contexts/AuthContext';
+import { useFavorites } from '../contexts/FavoritesContext';
+import { useSearch } from '../contexts/SearchContext';
 import { Channel } from '../types.ts';
 
 const FavoritesList: React.FC = () => {
-  const { favorites, removeFavorite, setSelectedChannel, selectedChannel, currentUser } = useYoutube();
+  const { currentUser } = useAuth();
+  const { favorites, removeFavorite } = useFavorites();
+  const { selectedChannel, setSelectedChannel } = useSearch();
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">

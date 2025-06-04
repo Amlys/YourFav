@@ -2,10 +2,14 @@ import React from 'react';
 import SearchBar from '../components/SearchBar';
 import VideoFeed from '../components/VideoFeed';
 import FavoritesList from '../components/FavoritesList';
-import { useYoutube } from '../context/YoutubeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { useFavorites } from '../contexts/FavoritesContext';
+import { useVideos } from '../contexts/VideosContext';
 
 const HomePage: React.FC = () => {
-  const { favorites, currentUser, isLoading } = useYoutube(); 
+  const { currentUser } = useAuth();
+  const { favorites } = useFavorites();
+  const { isLoading } = useVideos(); 
 
   return (
     <div className="flex flex-col space-y-6">

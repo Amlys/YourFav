@@ -3,12 +3,13 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import HomePage from './pages/HomePage';
 import LandingPage from './pages/LandingPage';
 import Header from './components/Header';
-import { YoutubeProvider, useYoutube } from './context/YoutubeContext';
+import { AppProvider } from './contexts/AppProvider';
+import { useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 
 // Composant pour protéger les routes qui nécessitent une authentification
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser, isAuthLoading } = useYoutube(); // Utiliser isAuthLoading au lieu de isLoading
+  const { currentUser, isAuthLoading } = useAuth();
   const location = useLocation();
 
   // Pendant le chargement initial de l'authentification, on peut montrer un loader
@@ -48,7 +49,7 @@ function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <YoutubeProvider>
+        <AppProvider>
           <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
             <Routes>
               {/* La landing page est accessible à tous et est la route par défaut */}
@@ -67,7 +68,7 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
-        </YoutubeProvider>
+        </AppProvider>
       </ThemeProvider>
     </BrowserRouter>
   );

@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Search, AlertCircle, Plus, User } from 'lucide-react';
-import { useYoutube } from '../context/YoutubeContext.tsx';
+import { useAuth } from '../contexts/AuthContext';
+import { useSearch } from '../contexts/SearchContext';
+import { useFavorites } from '../contexts/FavoritesContext';
 import { Channel } from '../types.ts';
 
 const SearchBar: React.FC = () => {
-  const { searchChannels, addFavorite, searchResults, isLoading, error, clearError, currentUser } = useYoutube();
+  const { currentUser } = useAuth();
+  const { searchResults, isLoading, error, searchChannels, clearError } = useSearch();
+  const { addFavorite } = useFavorites();
   const [query, setQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [addingFavorite, setAddingFavorite] = useState<string | null>(null);
