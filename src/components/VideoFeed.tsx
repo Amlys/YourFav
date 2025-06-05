@@ -16,14 +16,17 @@ const VideoFeed: React.FC = () => {
     fetchLatestVideos,
     watchedVideoIds,
     laterVideoIds,
+    deletedVideoIds,
     markVideoWatched,
     markVideoLater,
+    markVideoDeleted,
     removeVideoFromWatched,
     removeVideoFromLater,
+    restoreVideoFromDeleted,
   } = useVideos();
   const [refreshing, setRefreshing] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  const [tab, setTab] = useState<'a_voir' | 'deja_vu' | 'plus_tard'>('a_voir');
+  const [tab, setTab] = useState<'a_voir' | 'deja_vu' | 'plus_tard' | 'supprimees'>('a_voir');
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -38,6 +41,7 @@ const VideoFeed: React.FC = () => {
       return videos.filter(
         v => !watchedVideoIds.includes(v.id) && 
             !laterVideoIds.includes(v.id) && 
+            !deletedVideoIds.includes(v.id) &&
             (showAll || !selectedChannel || v.channelId === selectedChannel)
       );
     } else if (tab === 'deja_vu') {
@@ -50,9 +54,14 @@ const VideoFeed: React.FC = () => {
         v => laterVideoIds.includes(v.id) && 
             (showAll || !selectedChannel || v.channelId === selectedChannel)
       );
+    } else if (tab === 'supprimees') {
+      return videos.filter(
+        v => deletedVideoIds.includes(v.id) && 
+            (showAll || !selectedChannel || v.channelId === selectedChannel)
+      );
     }
     return videos;
-  }, [videos, tab, watchedVideoIds, laterVideoIds, showAll, selectedChannel]);
+  }, [videos, tab, watchedVideoIds, laterVideoIds, deletedVideoIds, showAll, selectedChannel]);
 
   // Mémoisation du nom de la chaîne sélectionnée
   const selectedChannelName = useMemo(() => 
@@ -61,7 +70,7 @@ const VideoFeed: React.FC = () => {
   );
 
   // Mémoisation des handlers de changement d'onglet
-  const handleTabChange = useCallback((newTab: 'a_voir' | 'deja_vu' | 'plus_tard') => 
+  const handleTabChange = useCallback((newTab: 'a_voir' | 'deja_vu' | 'plus_tard' | 'supprimees') => 
     setTab(newTab), []);
   
   const handleShowAllToggle = useCallback(() => setShowAll(prev => !prev), []);
@@ -70,9 +79,11 @@ const VideoFeed: React.FC = () => {
   const createVideoHandlers = useCallback((videoId: string) => ({
     onMarkWatched: () => markVideoWatched(videoId),
     onMarkLater: () => markVideoLater(videoId),
+    onMarkDeleted: () => markVideoDeleted(videoId),
     onRemoveWatched: () => removeVideoFromWatched(videoId),
     onRemoveLater: () => removeVideoFromLater(videoId),
-  }), [markVideoWatched, markVideoLater, removeVideoFromWatched, removeVideoFromLater]);
+    onRestoreDeleted: () => restoreVideoFromDeleted(videoId),
+  }), [markVideoWatched, markVideoLater, markVideoDeleted, removeVideoFromWatched, removeVideoFromLater, restoreVideoFromDeleted]);
 
   if (error) {
     return (
@@ -95,10 +106,11 @@ const VideoFeed: React.FC = () => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
       <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-        <div className="flex items-center gap-2 mb-2 md:mb-0">
+        <div className="flex items-center gap-2 mb-2 md:mb-0 flex-wrap">
           <button onClick={() => handleTabChange('a_voir')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'a_voir' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>À voir</button>
           <button onClick={() => handleTabChange('deja_vu')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'deja_vu' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>Déjà visionnée</button>
           <button onClick={() => handleTabChange('plus_tard')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'plus_tard' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>Plus tard</button>
+          <button onClick={() => handleTabChange('supprimees')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'supprimees' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>Supprimées</button>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -152,13 +164,15 @@ const VideoFeed: React.FC = () => {
       ) : (
         <div className="p-8 text-center">
           <p className="text-gray-500 dark:text-gray-400 mb-4">
-            {selectedChannel 
-              ? "Aucune vidéo trouvée pour cette chaîne au cours du dernier mois" 
-              : favorites.length > 0 
-                ? "Aucune vidéo disponible pour le dernier mois"
-                : "Aucune vidéo disponible pour le moment"}
+            {tab === 'supprimees' 
+              ? "Aucune vidéo supprimée"
+              : selectedChannel 
+                ? "Aucune vidéo trouvée pour cette chaîne au cours du dernier mois" 
+                : favorites.length > 0 
+                  ? "Aucune vidéo disponible pour le dernier mois"
+                  : "Aucune vidéo disponible pour le moment"}
           </p>
-          {selectedChannel && (
+          {selectedChannel && tab !== 'supprimees' && (
             <a
               href={`https://www.youtube.com/channel/${selectedChannel}`}
               target="_blank"

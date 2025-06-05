@@ -8,13 +8,16 @@ interface VideosContextType {
   videos: Video[];
   watchedVideoIds: string[];
   laterVideoIds: string[];
+  deletedVideoIds: string[];
   isLoading: boolean;
   error: string | null;
   fetchLatestVideos: () => Promise<void>;
   markVideoWatched: (videoId: string) => void;
   markVideoLater: (videoId: string) => void;
+  markVideoDeleted: (videoId: string) => void;
   removeVideoFromWatched: (videoId: string) => void;
   removeVideoFromLater: (videoId: string) => void;
+  restoreVideoFromDeleted: (videoId: string) => void;
   clearError: () => void;
 }
 
@@ -26,6 +29,7 @@ export const VideosProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [videos, setVideos] = useState<Video[]>([]);
   const [watchedVideoIds, setWatchedVideoIds] = useState<string[]>([]);
   const [laterVideoIds, setLaterVideoIds] = useState<string[]>([]);
+  const [deletedVideoIds, setDeletedVideoIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,22 +41,26 @@ export const VideosProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return {
       watched: `watchedVideos_${currentUser.uid}`,
       later: `laterVideos_${currentUser.uid}`,
+      deleted: `deletedVideos_${currentUser.uid}`,
     };
   }, [currentUser]);
 
-  // Gestion du localStorage pour les vidéos vues et plus tard (par utilisateur)
+  // Gestion du localStorage pour les vidéos vues, plus tard et supprimées (par utilisateur)
   useEffect(() => {
     if (!currentUser || !storageKeys) {
       setWatchedVideoIds([]);
       setLaterVideoIds([]);
+      setDeletedVideoIds([]);
       return;
     }
     
     const watched = localStorage.getItem(storageKeys.watched);
     const later = localStorage.getItem(storageKeys.later);
+    const deleted = localStorage.getItem(storageKeys.deleted);
     
     setWatchedVideoIds(watched ? JSON.parse(watched) : []);
     setLaterVideoIds(later ? JSON.parse(later) : []);
+    setDeletedVideoIds(deleted ? JSON.parse(deleted) : []);
   }, [currentUser, storageKeys]);
 
   // Sauvegarder les vidéos vues dans localStorage
@@ -67,14 +75,28 @@ export const VideosProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     localStorage.setItem(storageKeys.later, JSON.stringify(laterVideoIds));
   }, [laterVideoIds, currentUser, storageKeys]);
 
+  // Sauvegarder les vidéos supprimées dans localStorage
+  useEffect(() => {
+    if (!currentUser || !storageKeys) return;
+    localStorage.setItem(storageKeys.deleted, JSON.stringify(deletedVideoIds));
+  }, [deletedVideoIds, currentUser, storageKeys]);
+
   const markVideoWatched = useCallback((videoId: string) => {
     setWatchedVideoIds((prev) => prev.includes(videoId) ? prev : [...prev, videoId]);
     setLaterVideoIds((prev) => prev.filter(id => id !== videoId)); // Si on marque comme vue, on l'enlève de "plus tard"
+    setDeletedVideoIds((prev) => prev.filter(id => id !== videoId)); // Et on l'enlève de "supprimées"
   }, []);
 
   const markVideoLater = useCallback((videoId: string) => {
     setLaterVideoIds((prev) => prev.includes(videoId) ? prev : [...prev, videoId]);
     setWatchedVideoIds((prev) => prev.filter(id => id !== videoId)); // Si on met "plus tard", on l'enlève de "vue"
+    setDeletedVideoIds((prev) => prev.filter(id => id !== videoId)); // Et on l'enlève de "supprimées"
+  }, []);
+
+  const markVideoDeleted = useCallback((videoId: string) => {
+    setDeletedVideoIds((prev) => prev.includes(videoId) ? prev : [...prev, videoId]);
+    setWatchedVideoIds((prev) => prev.filter(id => id !== videoId)); // Si on supprime, on l'enlève de "vue"
+    setLaterVideoIds((prev) => prev.filter(id => id !== videoId)); // Et on l'enlève de "plus tard"
   }, []);
 
   const removeVideoFromWatched = useCallback((videoId: string) => {
@@ -83,6 +105,10 @@ export const VideosProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const removeVideoFromLater = useCallback((videoId: string) => {
     setLaterVideoIds((prev) => prev.filter(id => id !== videoId));
+  }, []);
+
+  const restoreVideoFromDeleted = useCallback((videoId: string) => {
+    setDeletedVideoIds((prev) => prev.filter(id => id !== videoId));
   }, []);
 
   const fetchLatestVideos = useCallback(async () => {
@@ -139,25 +165,31 @@ export const VideosProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     videos,
     watchedVideoIds,
     laterVideoIds,
+    deletedVideoIds,
     isLoading,
     error,
     fetchLatestVideos,
     markVideoWatched,
     markVideoLater,
+    markVideoDeleted,
     removeVideoFromWatched,
     removeVideoFromLater,
+    restoreVideoFromDeleted,
     clearError,
   }), [
     videos,
     watchedVideoIds,
     laterVideoIds,
+    deletedVideoIds,
     isLoading,
     error,
     fetchLatestVideos,
     markVideoWatched,
     markVideoLater,
+    markVideoDeleted,
     removeVideoFromWatched,
     removeVideoFromLater,
+    restoreVideoFromDeleted,
     clearError,
   ]);
 

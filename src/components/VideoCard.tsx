@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Play, Calendar, ExternalLink } from 'lucide-react';
+import { Play, Calendar, ExternalLink, Trash2, RotateCcw } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Video } from '../types';
 import OptimizedImage from './OptimizedImage';
@@ -7,11 +7,13 @@ import { usePerformanceMonitor } from '../hooks/usePerformanceMonitor';
 
 interface VideoCardProps {
   video: Video;
-  tab?: 'a_voir' | 'deja_vu' | 'plus_tard';
+  tab?: 'a_voir' | 'deja_vu' | 'plus_tard' | 'supprimees';
   onMarkWatched?: () => void;
   onMarkLater?: () => void;
+  onMarkDeleted?: () => void;
   onRemoveWatched?: () => void;
   onRemoveLater?: () => void;
+  onRestoreDeleted?: () => void;
 }
 
 const VideoCard: React.FC<VideoCardProps> = React.memo(({ 
@@ -19,8 +21,10 @@ const VideoCard: React.FC<VideoCardProps> = React.memo(({
   tab, 
   onMarkWatched, 
   onMarkLater, 
+  onMarkDeleted,
   onRemoveWatched, 
-  onRemoveLater 
+  onRemoveLater,
+  onRestoreDeleted
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -111,18 +115,76 @@ const VideoCard: React.FC<VideoCardProps> = React.memo(({
             <span>Published {formattedDate}</span>
           </div>
           
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2 mt-2 flex-wrap">
             {tab === 'a_voir' && (
               <>
-                <button onClick={onMarkWatched} className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition">Déjà vu</button>
-                <button onClick={onMarkLater} className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition">Plus tard</button>
+                <button 
+                  onClick={onMarkWatched} 
+                  className="px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition"
+                >
+                  Déjà vu
+                </button>
+                <button 
+                  onClick={onMarkLater} 
+                  className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition"
+                >
+                  Plus tard
+                </button>
+                <button 
+                  onClick={onMarkDeleted} 
+                  className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition flex items-center gap-1"
+                  title="Supprimer cette vidéo"
+                >
+                  <Trash2 size={12} />
+                  Supprimer
+                </button>
               </>
             )}
             {tab === 'deja_vu' && (
-              <button onClick={onRemoveWatched} className="px-2 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500 transition">Retirer</button>
+              <>
+                <button 
+                  onClick={onRemoveWatched} 
+                  className="px-2 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500 transition"
+                >
+                  Retirer
+                </button>
+                <button 
+                  onClick={onMarkDeleted} 
+                  className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition flex items-center gap-1"
+                  title="Supprimer cette vidéo"
+                >
+                  <Trash2 size={12} />
+                  Supprimer
+                </button>
+              </>
             )}
             {tab === 'plus_tard' && (
-              <button onClick={onRemoveLater} className="px-2 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500 transition">Retirer</button>
+              <>
+                <button 
+                  onClick={onRemoveLater} 
+                  className="px-2 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500 transition"
+                >
+                  Retirer
+                </button>
+                <button 
+                  onClick={onMarkDeleted} 
+                  className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition flex items-center gap-1"
+                  title="Supprimer cette vidéo"
+                >
+                  <Trash2 size={12} />
+                  Supprimer
+                </button>
+              </>
+            )}
+            {tab === 'supprimees' && (
+              <button 
+                onClick={onRestoreDeleted} 
+                className="px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition flex items-center gap-1"
+                title="Restaurer cette vidéo"
+              >
+                <RotateCcw size={12} />
+                Restaurer
+              </button>
             )}
           </div>
         </div>
