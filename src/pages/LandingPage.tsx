@@ -1,106 +1,123 @@
 // filepath: c:\Users\LAM\Downloads\project\src\pages\LandingPage.tsx
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Youtube, PlayCircle, Star, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { Youtube, CheckCircle, ListVideo, Bell } from 'lucide-react';
+import Header from '../components/Header';
 
 const LandingPage: React.FC = () => {
-  const { currentUser, signInWithGoogle, isAuthLoading } = useAuth();
-  const navigate = useNavigate();
+  const { currentUser, signInWithGoogle } = useAuth();
 
-  useEffect(() => {
-    if (currentUser && !isAuthLoading) { // Attendre la fin du chargement de l'auth
-      navigate('/home');
-    }
-  }, [currentUser, isAuthLoading, navigate]); // Ajouter isAuthLoading aux dépendances
-
-  const handleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-      // La redirection sera gérée par le useEffect ci-dessus
-    } catch (error) {
-      console.error("Erreur lors de la connexion Google:", error);
-      // Afficher une notification d'erreur si nécessaire
-    }
-  };
-
-  // Pendant que l'état d'authentification initial se charge
-  if (isAuthLoading) { // Utiliser isAuthLoading
+  // Si l'utilisateur est déjà connecté, on peut afficher un message de bienvenue
+  if (currentUser) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-red-500 via-red-600 to-red-700 p-4 text-white">
-        <div className="animate-pulse">
-          <Youtube size={48} className="mb-4" />
-          <p className="text-2xl">Chargement de votre expérience Yourfav...</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Header />
+        <div className="pt-16 lg:pt-18 flex items-center justify-center min-h-screen">
+          <div className="text-center px-4">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+              Bienvenue, {currentUser.displayName || 'Utilisateur'} !
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300 mb-8">
+              Vous êtes connecté. Accédez à votre feed personnalisé.
+            </p>
+            <Link
+              to="/home"
+              className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors shadow-lg"
+            >
+              Accéder au Feed
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
-  
-  // Si l'utilisateur est déjà connecté (après le chargement de l'auth), la redirection via useEffect se chargera
-  // Cette condition peut être simplifiée ou supprimée si useEffect gère bien la redirection
-  if (currentUser && !isAuthLoading) {
-    return null; 
-  }
-  
+
+  const handleSignIn = async () => {
+    await signInWithGoogle();
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 via-gray-50 to-white dark:from-gray-800 dark:via-gray-900 dark:to-black p-6 pt-12 pb-20">
-      <main className="text-center max-w-3xl mx-auto">
-        <div className="flex justify-center items-center mb-8">
-          <Youtube size={64} className="text-red-600" />
-          <h1 className="ml-4 text-5xl md:text-6xl font-bold text-gray-800 dark:text-white">
-            Yourfav
-          </h1>
-        </div>
-
-        <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-10 px-4">
-          Ne manquez plus jamais une vidéo de vos chaînes YouTube préférées ! Centralisez vos abonnements et recevez un flux personnalisé des dernières publications, le tout en un seul endroit.
-        </p>
-
-        <div className="grid md:grid-cols-3 gap-6 md:gap-8 mb-12 text-left px-4">
-          <div className="bg-white dark:bg-gray-800/50 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-center text-red-500 dark:text-red-400 mb-3">
-              <ListVideo size={28} className="mr-3 flex-shrink-0" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Flux Unifié</h3>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Header />
+      <div className="pt-16 lg:pt-18">
+        {/* Hero Section */}
+        <section className="py-20 px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="flex justify-center mb-8">
+              <Youtube size={64} className="text-red-600" />
             </div>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Consultez les dernières vidéos de toutes vos chaînes favorites en un seul endroit, sans distraction.
+            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+              YourFav
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+              Suivez vos chaînes YouTube préférées et découvrez leurs dernières vidéos en un seul endroit
             </p>
+            <button
+              onClick={handleSignIn}
+              className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors shadow-xl transform hover:scale-105"
+            >
+              Commencer avec Google
+            </button>
           </div>
-          <div className="bg-white dark:bg-gray-800/50 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-center text-red-500 dark:text-red-400 mb-3">
-              <CheckCircle size={28} className="mr-3 flex-shrink-0" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Gestion Facile</h3>
-            </div>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Ajoutez ou supprimez des chaînes de vos favoris en quelques clics. C'est simple et intuitif.
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800/50 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-center text-red-500 dark:text-red-400 mb-3">
-              <Bell size={28} className="mr-3 flex-shrink-0" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Restez à Jour</h3>
-            </div>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Plus besoin de naviguer entre plusieurs pages ou applications. Tout ce qui compte est ici.
-            </p>
-          </div>
-        </div>
+        </section>
 
-        <button
-          onClick={handleSignIn}
-          disabled={isAuthLoading} // Utiliser isAuthLoading pour le bouton
-          className="w-full max-w-xs mx-auto flex items-center justify-center px-6 py-3 sm:px-8 sm:py-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 disabled:opacity-70"
-        >
-          <svg className="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48px" height="48px"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l0.013-0.013l7.627,6.017C43.022,36.375,44,34,44,30C44,22.659,43.862,21.35,43.611,20.083z"/></svg>
-          {isAuthLoading ? 'Chargement...' : 'Se connecter avec Google'} {/* Mettre à jour le texte du bouton */} 
-        </button>
-        <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-          Créez un compte ou connectez-vous pour commencer à personnaliser votre expérience.
-        </p>
-      </main>
-      <footer className="absolute bottom-0 left-0 right-0 p-4 text-center text-xs text-gray-500 dark:text-gray-400">
-        © {new Date().getFullYear()} Yourfav. Tous droits réservés.
-      </footer>
+        {/* Features Section */}
+        <section className="py-20 bg-white dark:bg-gray-800">
+          <div className="max-w-6xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-16">
+              Pourquoi choisir YourFav ?
+            </h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center p-6">
+                <PlayCircle size={48} className="text-red-600 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                  Vidéos Récentes
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300">
+                  Accédez rapidement aux dernières vidéos de toutes vos chaînes favorites
+                </p>
+              </div>
+              <div className="text-center p-6">
+                <Star size={48} className="text-red-600 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                  Organisation Simple
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300">
+                  Marquez les vidéos comme vues, à regarder plus tard ou supprimez-les
+                </p>
+              </div>
+              <div className="text-center p-6">
+                <Users size={48} className="text-red-600 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                  Chaînes Favorites
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300">
+                  Gérez facilement votre liste de chaînes YouTube préférées
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-20 px-4">
+          <div className="max-w-2xl mx-auto text-center">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+              Prêt à commencer ?
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-8">
+              Connectez-vous avec votre compte Google et découvrez une nouvelle façon de suivre YouTube
+            </p>
+            <button
+              onClick={handleSignIn}
+              className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors shadow-lg"
+            >
+              Se connecter maintenant
+            </button>
+          </div>
+        </section>
+      </div>
     </div>
   );
 };
