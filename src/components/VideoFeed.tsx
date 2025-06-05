@@ -87,16 +87,16 @@ const VideoFeed: React.FC = () => {
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400 mb-4">
-          <AlertCircle size={20} />
-          <p>{error}</p>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+        <div className="flex items-center gap-3 text-red-600 dark:text-red-400 mb-6">
+          <AlertCircle size={24} />
+          <p className="text-lg">{error}</p>
         </div>
         <button
           onClick={handleRefresh}
-          className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 flex items-center gap-2"
+          className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 flex items-center gap-2 font-medium"
         >
-          <RefreshCw size={16} />
+          <RefreshCw size={18} />
           Réessayer
         </button>
       </div>
@@ -104,27 +104,63 @@ const VideoFeed: React.FC = () => {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-        <div className="flex items-center gap-2 mb-2 md:mb-0 flex-wrap">
-          <button onClick={() => handleTabChange('a_voir')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'a_voir' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>À voir</button>
-          <button onClick={() => handleTabChange('deja_vu')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'deja_vu' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>Déjà visionnée</button>
-          <button onClick={() => handleTabChange('plus_tard')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'plus_tard' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>Plus tard</button>
-          <button onClick={() => handleTabChange('supprimees')} className={`px-3 py-1 rounded-t-md md:rounded-md text-sm font-semibold ${tab === 'supprimees' ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'}`}>Supprimées</button>
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
+      <div className="p-5 lg:p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          <button 
+            onClick={() => handleTabChange('a_voir')} 
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+              tab === 'a_voir' 
+                ? 'bg-red-600 text-white shadow-md' 
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            À voir
+          </button>
+          <button 
+            onClick={() => handleTabChange('deja_vu')} 
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+              tab === 'deja_vu' 
+                ? 'bg-red-600 text-white shadow-md' 
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            Déjà visionnée
+          </button>
+          <button 
+            onClick={() => handleTabChange('plus_tard')} 
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+              tab === 'plus_tard' 
+                ? 'bg-red-600 text-white shadow-md' 
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            Plus tard
+          </button>
+          <button 
+            onClick={() => handleTabChange('supprimees')} 
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+              tab === 'supprimees' 
+                ? 'bg-red-600 text-white shadow-md' 
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            Supprimées
+          </button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             onClick={handleRefresh}
             disabled={isLoading || refreshing}
-            className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            className="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 disabled:opacity-50"
             aria-label="Rafraîchir le flux"
           >
-            <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
+            <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
           </button>
           {selectedChannel && !showAll && (
             <button
               onClick={handleShowAllToggle}
-              className="ml-2 px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700 text-sm transition-colors"
+              className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 text-sm font-medium transition-colors shadow-sm"
             >
               Voir toutes les vidéos
             </button>
@@ -132,7 +168,7 @@ const VideoFeed: React.FC = () => {
           {showAll && (
             <button
               onClick={handleShowAllToggle}
-              className="ml-2 px-3 py-1 rounded bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-400 dark:hover:bg-gray-600 text-sm transition-colors"
+              className="px-4 py-2 rounded-lg bg-gray-300 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-400 dark:hover:bg-gray-600 text-sm font-medium transition-colors shadow-sm"
             >
               Filtrer par chaîne
             </button>
@@ -141,14 +177,14 @@ const VideoFeed: React.FC = () => {
       </div>
 
       {isLoading ? (
-        <div className="p-8 flex justify-center">
+        <div className="p-12 flex justify-center">
           <div className="animate-pulse flex flex-col items-center">
-            <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-700 mb-4"></div>
-            <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 mb-4"></div>
+            <div className="h-4 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
           </div>
         </div>
       ) : filteredVideos.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6 p-6">
           {filteredVideos.map((video) => {
             const handlers = createVideoHandlers(video.id);
             return (
@@ -162,27 +198,29 @@ const VideoFeed: React.FC = () => {
           })}
         </div>
       ) : (
-        <div className="p-8 text-center">
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
-            {tab === 'supprimees' 
-              ? "Aucune vidéo supprimée"
-              : selectedChannel 
-                ? "Aucune vidéo trouvée pour cette chaîne au cours du dernier mois" 
-                : favorites.length > 0 
-                  ? "Aucune vidéo disponible pour le dernier mois"
-                  : "Aucune vidéo disponible pour le moment"}
-          </p>
-          {selectedChannel && tab !== 'supprimees' && (
-            <a
-              href={`https://www.youtube.com/channel/${selectedChannel}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-            >
-              <span>Voir la chaîne sur YouTube</span>
-              <ExternalLink size={16} className="ml-1" />
-            </a>
-          )}
+        <div className="p-12 text-center">
+          <div className="max-w-md mx-auto">
+            <p className="text-gray-500 dark:text-gray-400 mb-6 text-lg">
+              {tab === 'supprimees' 
+                ? "Aucune vidéo supprimée"
+                : selectedChannel 
+                  ? "Aucune vidéo trouvée pour cette chaîne au cours du dernier mois" 
+                  : favorites.length > 0 
+                    ? "Aucune vidéo disponible pour le dernier mois"
+                    : "Aucune vidéo disponible pour le moment"}
+            </p>
+            {selectedChannel && tab !== 'supprimees' && (
+              <a
+                href={`https://www.youtube.com/channel/${selectedChannel}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
+              >
+                <span>Voir la chaîne sur YouTube</span>
+                <ExternalLink size={16} className="ml-2" />
+              </a>
+            )}
+          </div>
         </div>
       )}
     </div>

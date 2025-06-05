@@ -1,57 +1,32 @@
 import React from 'react';
 import SearchBar from '../components/SearchBar';
-import VideoFeed from '../components/VideoFeed';
 import FavoritesList from '../components/FavoritesList';
-import { useAuth } from '../contexts/AuthContext';
-import { useFavorites } from '../contexts/FavoritesContext';
-import { useVideos } from '../contexts/VideosContext';
+import VideoFeed from '../components/VideoFeed';
 
 const HomePage: React.FC = () => {
-  const { currentUser } = useAuth();
-  const { favorites } = useFavorites();
-  const { isLoading } = useVideos(); 
-
   return (
-    <div className="flex flex-col space-y-6">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-          Yourfav <span className="text-red-600">YouTube</span> Feed
+    <div className="h-full w-full px-3 py-4 lg:px-6 lg:py-6">
+      {/* Section de recherche - Plus compacte */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 lg:p-6 mb-4 lg:mb-6">
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          Vos chaînes YouTube favorites
         </h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
-          Keep up with your favorite YouTubers in one personalized feed
+        <p className="text-gray-600 dark:text-gray-300 mb-4 lg:mb-6 text-sm lg:text-base">
+          Recherchez et ajoutez vos chaînes YouTube préférées pour voir leurs dernières vidéos
         </p>
         <SearchBar />
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1">
+      {/* Contenu principal - Layout optimisé */}
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 lg:gap-6 h-full">
+        {/* Sidebar des favoris - Plus étroite sur grand écran */}
+        <div className="xl:col-span-1">
           <FavoritesList />
         </div>
-        <div className="lg:col-span-3">
-          {isLoading && <p className="text-center text-gray-500 dark:text-gray-400">Loading videos...</p>}
-          {!isLoading && !currentUser && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-sm text-center">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Welcome to Yourfav!
-              </h2>
-              <p className="text-gray-600 dark:text-gray-300">
-                Please sign in to see your personalized feed and manage your favorite channels.
-              </p>
-            </div>
-          )}
-          {!isLoading && currentUser && favorites.length === 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-sm text-center">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                No favorites yet
-              </h2>
-              <p className="text-gray-600 dark:text-gray-300">
-                Search for YouTubers and add them to your favorites to see their latest videos here.
-              </p>
-            </div>
-          )}
-          {!isLoading && currentUser && favorites.length > 0 && (
-            <VideoFeed />
-          )}
+        
+        {/* Feed de vidéos - Plus d'espace */}
+        <div className="xl:col-span-4">
+          <VideoFeed />
         </div>
       </div>
     </div>
