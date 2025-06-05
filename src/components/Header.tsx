@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Youtube, Moon, Sun, LogIn, LogOut, Search, AlertCircle, Plus, User } from 'lucide-react';
+import { Youtube, Moon, Sun, LogIn, LogOut, Search, AlertCircle, Plus, User, Monitor, ChevronDown } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useSearch } from '../contexts/SearchContext';
@@ -8,7 +8,7 @@ import { useFavorites } from '../contexts/FavoritesContext';
 import { Channel } from '../types.ts';
 
 const Header: React.FC = () => {
-  const { darkMode, toggleDarkMode } = useTheme();
+  const { darkMode, toggleDarkMode, setDarkMode, isAutoMode, toggleAutoMode, systemPreference } = useTheme();
   const { currentUser, signInWithGoogle, signOutUser } = useAuth();
   const { searchResults, isLoading, error, searchChannels, clearError } = useSearch();
   const { addFavorite } = useFavorites();
@@ -18,6 +18,9 @@ const Header: React.FC = () => {
   const [showResults, setShowResults] = useState(false);
   const [addingFavorite, setAddingFavorite] = useState<string | null>(null);
   const [brokenThumbnails, setBrokenThumbnails] = useState<string[]>([]);
+  
+  // État pour le menu de thème
+  const [showThemeMenu, setShowThemeMenu] = useState(false);
 
   useEffect(() => {
     // Cacher les résultats si on clique en dehors de la searchbar et de ses résultats
@@ -26,13 +29,16 @@ const Header: React.FC = () => {
       if (showResults && !target.closest('.header-search-container')) {
         setShowResults(false);
       }
+      if (showThemeMenu && !target.closest('.theme-menu-container')) {
+        setShowThemeMenu(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showResults]);
+  }, [showResults, showThemeMenu]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,8 +67,28 @@ const Header: React.FC = () => {
     }
   };
 
+  // Fonction pour obtenir l'icône du thème actuel
+  const getThemeIcon = () => {
+    if (isAutoMode) {
+      return <Monitor size={20} className="text-blue-500" />;
+    }
+    return darkMode ? (
+      <Moon size={20} className="text-blue-400" />
+    ) : (
+      <Sun size={20} className="text-yellow-500" />
+    );
+  };
+
+  // Fonction pour obtenir le texte du thème actuel
+  const getThemeText = () => {
+    if (isAutoMode) {
+      return `Auto (${systemPreference ? 'Sombre' : 'Clair'})`;
+    }
+    return darkMode ? 'Sombre' : 'Clair';
+  };
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700 transition-colors duration-300">
       <div className="max-w-full px-4 lg:px-6">
         <div className="flex items-center justify-between h-16 lg:h-18">
           {/* Logo Section */}
@@ -181,17 +207,77 @@ const Header: React.FC = () => {
           
           {/* Controls Section */}
           <div className="flex items-center space-x-2 lg:space-x-4 flex-shrink-0">
-            <button
-              onClick={toggleDarkMode}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              aria-label={darkMode ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {darkMode ? (
-                <Sun size={20} className="text-yellow-400" />
-              ) : (
-                <Moon size={20} className="text-gray-600" />
+            {/* Menu de Thème Amélioré */}
+            <div className="relative theme-menu-container">
+              <button
+                onClick={() => setShowThemeMenu(!showThemeMenu)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-1"
+                aria-label="Changer le thème"
+              >
+                {getThemeIcon()}
+                <ChevronDown size={14} className={`text-gray-500 transition-transform duration-200 ${showThemeMenu ? 'rotate-180' : ''}`} />
+              </button>
+
+              {showThemeMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        if (!isAutoMode) toggleAutoMode();
+                        setShowThemeMenu(false);
+                      }}
+                      className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-3 ${
+                        isAutoMode ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      <Monitor size={16} />
+                      <div>
+                        <div className="text-sm font-medium">Automatique</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Suit les réglages système</div>
+                      </div>
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setDarkMode(false); // Force le mode clair
+                        setShowThemeMenu(false);
+                      }}
+                      className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-3 ${
+                        !isAutoMode && !darkMode ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400' : 'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      <Sun size={16} />
+                      <div>
+                        <div className="text-sm font-medium">Mode Clair</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Interface lumineuse</div>
+                      </div>
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setDarkMode(true); // Force le mode sombre
+                        setShowThemeMenu(false);
+                      }}
+                      className={`w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-3 ${
+                        !isAutoMode && darkMode ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      <Moon size={16} />
+                      <div>
+                        <div className="text-sm font-medium">Mode Sombre</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Interface sombre</div>
+                      </div>
+                    </button>
+                  </div>
+                  
+                  <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-2">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      Actuel : {getThemeText()}
+                    </div>
+                  </div>
+                </div>
               )}
-            </button>
+            </div>
 
             {currentUser ? (
               <div className="flex items-center space-x-2 lg:space-x-3">

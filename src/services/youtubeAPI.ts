@@ -17,13 +17,6 @@ import { transformAndValidateChannels } from './transformers';
 const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 const BASE_URL = 'https://www.googleapis.com/youtube/v3';
 
-// Get date from one month ago
-// const getOneMonthAgo = () => { // Commentée car non utilisée et cause un avertissement
-//   const date = new Date();
-//   date.setMonth(date.getMonth() - 1);
-//   return date.toISOString();
-// };
-
 export const youtubeAPI = {
   // Search for YouTube channels
   searchChannels: async (query: string): Promise<Channel[]> => {
@@ -230,10 +223,11 @@ export const youtubeAPI = {
       const uploadsPlaylistId = channelData.items[0].contentDetails.relatedPlaylists.uploads;
       console.log(`[youtubeAPI] Found uploads playlist ID ${uploadsPlaylistId} for channel ${channelId}`);
 
-      // 2. Get the latest video from the uploads playlist
-      console.log(`[youtubeAPI] Fetching latest video from playlist ID: ${uploadsPlaylistId}`);
+      // 2. Get multiple recent videos to ensure we find at least one valid video after filtering
+      // Récupération des 10 vidéos les plus récentes pour gérer les cas où les premières sont filtrées
+      console.log(`[youtubeAPI] Fetching recent videos from playlist ID: ${uploadsPlaylistId}`);
       const playlistItemsResponse = await fetch(
-        `${BASE_URL}/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=1&key=${API_KEY}`
+        `${BASE_URL}/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=10&key=${API_KEY}`
       );
 
       if (!playlistItemsResponse.ok) {
@@ -244,13 +238,26 @@ export const youtubeAPI = {
 
       const playlistData = await playlistItemsResponse.json();
 
-      if (playlistData.items && playlistData.items.length > 0) {
-        const videoItem = playlistData.items[0].snippet;
+      if (!playlistData.items || playlistData.items.length === 0) {
+        console.warn(`[youtubeAPI] No videos found in uploads playlist for channel ${channelId}`);
+        return null;
+      }
+
+      console.log(`[youtubeAPI] Found ${playlistData.items.length} recent videos for channel ${channelId}, filtering...`);
+
+      // 3. Itérer sur les vidéos récentes pour trouver la première qui respecte nos critères
+      for (let i = 0; i < playlistData.items.length; i++) {
+        const videoItem = playlistData.items[i].snippet;
+        const videoId = videoItem.resourceId.videoId;
+        
+        console.log(`[youtubeAPI] Checking video ${i + 1}/${playlistData.items.length}: "${videoItem.title}" (ID: ${videoId})`);
         
         // Filtrer les Shorts
         const isShort =
           videoItem.title.toLowerCase().includes('shorts') ||
+          videoItem.title.toLowerCase().includes('#shorts') ||
           videoItem.description.toLowerCase().includes('shorts') ||
+          videoItem.description.toLowerCase().includes('#shorts') ||
           (videoItem.thumbnails &&
             (videoItem.thumbnails.high?.url?.includes('/shorts/') ||
              videoItem.thumbnails.medium?.url?.includes('/shorts/') ||
@@ -258,11 +265,10 @@ export const youtubeAPI = {
         
         if (isShort) {
           console.log(`[youtubeAPI] Video "${videoItem.title}" ignorée car c'est un Short.`);
-          return null;
+          continue; // Passer à la vidéo suivante
         }
 
         // Récupérer la durée de la vidéo
-        const videoId = videoItem.resourceId.videoId;
         const videoDetailsResponse = await fetch(
           `${BASE_URL}/videos?part=contentDetails&id=${videoId}&key=${API_KEY}`
         );
@@ -270,25 +276,29 @@ export const youtubeAPI = {
         if (!videoDetailsResponse.ok) {
           const errorText = await videoDetailsResponse.text();
           console.warn(`[youtubeAPI] Failed to fetch video details for ${videoId}. Status: ${videoDetailsResponse.status} ${videoDetailsResponse.statusText}. Response: ${errorText}`);
-          return null;
+          continue; // Passer à la vidéo suivante en cas d'erreur
         }
         
         const videoDetailsData = await videoDetailsResponse.json();
         if (!videoDetailsData.items || videoDetailsData.items.length === 0) {
           console.warn(`[youtubeAPI] No details found for video ${videoId}`);
-          return null;
+          continue; // Passer à la vidéo suivante
         }
         
         const durationISO = videoDetailsData.items[0].contentDetails.duration;
         const durationSeconds = youtubeAPI.parseISODurationToSeconds(durationISO);
         
+        // Filtrer les vidéos <= 3 minutes (180 secondes)
         if (durationSeconds <= 180) {
-          console.log(`[youtubeAPI] Video "${videoItem.title}" ignorée car durée <= 3min (${durationSeconds}s)`);
-          return null;
+          console.log(`[youtubeAPI] Video "${videoItem.title}" ignorée car durée <= 3min (${durationSeconds}s = ${Math.floor(durationSeconds / 60)}m${durationSeconds % 60}s)`);
+          continue; // Passer à la vidéo suivante
         }
 
+        // Cette vidéo respecte tous nos critères !
+        console.log(`[youtubeAPI] ✅ Video "${videoItem.title}" acceptée (durée: ${Math.floor(durationSeconds / 60)}m${durationSeconds % 60}s)`);
+        
         return {
-          id: videoItem.resourceId.videoId,
+          id: videoId,
           title: videoItem.title,
           description: videoItem.description,
           thumbnail: videoItem.thumbnails.high?.url || videoItem.thumbnails.default?.url,
@@ -298,7 +308,11 @@ export const youtubeAPI = {
           channelThumbnail: '', // Sera rempli par le contexte
         };
       }
+
+      // Aucune vidéo valide trouvée dans les 10 plus récentes
+      console.log(`[youtubeAPI] Aucune vidéo valide trouvée dans les ${playlistData.items.length} vidéos récentes de la chaîne ${channelId} (toutes filtrées)`);
       return null;
+      
     } catch (channelError: any) {
       console.warn(`[youtubeAPI] Error processing channel ${channelId}:`, channelError.message || channelError);
       return null;

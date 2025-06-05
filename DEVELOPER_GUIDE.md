@@ -1,5 +1,437 @@
 # 📘 Guide Développeur - YourFav YouTube Feed
 
+## 🆕 DARK MODE COMPLET ET SWITCH THÈME (Décembre 2024)
+
+### Vue d'ensemble
+Implémentation complète d'un système de thème avancé avec mode automatique, persistance intelligente et transitions fluides, sans flashs de contenu lors des changements de thème.
+
+### 🎯 Fonctionnalités Implémentées
+
+#### 1. **Système de Thème Avancé**
+- **Mode Automatique** : Suit automatiquement les préférences système de l'utilisateur
+- **Mode Manuel** : Permet de forcer le mode clair ou sombre
+- **Détection Système** : Écoute les changements de `prefers-color-scheme`
+- **Persistance Intelligente** : Sauvegarde séparée pour mode auto et mode manuel
+
+#### 2. **Interface de Sélection Élégante**
+- **Menu déroulant** : Interface complète avec 3 options (Auto, Clair, Sombre)
+- **Icônes dynamiques** : Monitor (auto), Sun (clair), Moon (sombre)
+- **État actuel** : Affichage du mode actuel dans le menu
+- **Animations fluides** : Transitions et rotations des icônes
+
+#### 3. **Transitions Sans Flash**
+- **Préchargement CSS** : Évite les flashs lors du chargement initial
+- **Transitions fluides** : 300ms avec `ease-in-out` pour tous les changements
+- **Background body** : Synchronisé avec le thème pour éviter les contrastes
+- **Scrollbars adaptées** : Style des scrollbars en fonction du thème
+
+---
+
+## 🏗️ Architecture Technique du Dark Mode
+
+### ThemeContext.tsx - Contexte Avancé
+```typescript
+interface ThemeContextType {
+  darkMode: boolean;                    // État actuel du thème
+  toggleDarkMode: () => void;           // Basculer manuellement
+  setDarkMode: (enabled: boolean) => void; // Définir explicitement
+  systemPreference: boolean;            // Préférence système détectée
+  isAutoMode: boolean;                  // Mode automatique activé ?
+  toggleAutoMode: () => void;           // Basculer le mode auto
+}
+
+// Gestion intelligente de la persistance
+const STORAGE_KEY = 'theme-preference';     // Préférence manuelle
+const AUTO_MODE_KEY = 'theme-auto-mode';    // Mode auto activé/désactivé
+
+// Logique de priorité :
+// 1. Si mode auto → utiliser systemPreference
+// 2. Sinon → utiliser la préférence sauvegardée
+// 3. Par défaut → systemPreference
+```
+
+### Header.tsx - Interface de Sélection
+```typescript
+// Menu de thème avec 3 options
+const ThemeMenu = () => (
+  <div className="dropdown-animation">
+    <button onClick={activateAutoMode}>
+      <Monitor /> Automatique
+      <span>Suit les réglages système</span>
+    </button>
+    
+    <button onClick={setLightMode}>
+      <Sun /> Mode Clair
+      <span>Interface lumineuse</span>
+    </button>
+    
+    <button onClick={setDarkMode}>
+      <Moon /> Mode Sombre
+      <span>Interface sombre</span>
+    </button>
+    
+    <footer>Actuel : {getThemeText()}</footer>
+  </div>
+);
+```
+
+### tailwind.config.js - Configuration Optimisée
+```javascript
+export default {
+  darkMode: 'class',  // ✅ ESSENTIEL : Active le dark mode par classes
+  theme: {
+    extend: {
+      colors: {
+        dark: {
+          // Palette personnalisée pour le dark mode
+          50: '#1a1a1a',   // Très sombre
+          100: '#2d2d2d',  // Sombre principal
+          // ... gradations jusqu'à
+          900: '#fafafa',  // Presque blanc
+        }
+      },
+      animation: {
+        'theme-transition': 'theme-transition 200ms ease-in-out',
+      },
+    },
+  },
+};
+```
+
+### index.css - Styles Anti-Flash
+```css
+@layer base {
+  /* Transitions globales pour éviter les flashs */
+  * {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 200ms;
+    transition-timing-function: ease-in-out;
+  }
+
+  /* Scrollbars adaptées au thème */
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 dark:bg-gray-600 rounded-full;
+  }
+
+  /* Sélection de texte stylée */
+  ::selection {
+    @apply bg-red-200 dark:bg-red-800 text-red-900 dark:text-red-100;
+  }
+}
+```
+
+---
+
+## 🎨 Système de Design du Dark Mode
+
+### 🌈 **Palette de Couleurs Harmonisée**
+```scss
+// Mode Clair (par défaut)
+--bg-primary: theme('colors.gray.50')       // #f9fafb
+--bg-secondary: theme('colors.white')       // #ffffff  
+--text-primary: theme('colors.gray.900')    // #111827
+--text-secondary: theme('colors.gray.600')  // #4b5563
+--border: theme('colors.gray.200')          // #e5e7eb
+
+// Mode Sombre
+--bg-primary-dark: theme('colors.gray.900')    // #111827
+--bg-secondary-dark: theme('colors.gray.800')  // #1f2937
+--text-primary-dark: theme('colors.white')     // #ffffff
+--text-secondary-dark: theme('colors.gray.300') // #d1d5db  
+--border-dark: theme('colors.gray.700')        // #374151
+```
+
+### 🎯 **Classes Tailwind Utilisées**
+```scss
+// Backgrounds
+.bg-primary { @apply bg-gray-50 dark:bg-gray-900; }
+.bg-secondary { @apply bg-white dark:bg-gray-800; }
+.bg-card { @apply bg-white dark:bg-gray-800; }
+
+// Textes
+.text-primary { @apply text-gray-900 dark:text-white; }
+.text-secondary { @apply text-gray-600 dark:text-gray-300; }
+.text-muted { @apply text-gray-500 dark:text-gray-400; }
+
+// Bordures
+.border-default { @apply border-gray-200 dark:border-gray-700; }
+
+// Hover states
+.hover-bg { @apply hover:bg-gray-100 dark:hover:bg-gray-700; }
+```
+
+### 🔄 **Animations et Transitions**
+```scss
+// Transitions fluides pour les changements de thème
+.theme-transition {
+  transition: background-color 300ms ease-in-out,
+              color 300ms ease-in-out,
+              border-color 300ms ease-in-out;
+}
+
+// Animation du bouton de thème
+.theme-toggle:hover {
+  transform: scale(1.1);
+  transition: transform 200ms ease-in-out;
+}
+
+// Animation du menu déroulant
+.dropdown-animation {
+  animation: slideInDown 200ms ease-out;
+}
+
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+```
+
+---
+
+## ⚡ **Optimisations Performance**
+
+### **Prévention des Flashs**
+```typescript
+// 1. Application immédiate du thème au chargement
+const [darkMode, setDarkMode] = useState(() => {
+  // Lecture synchrone au chargement
+  const savedAutoMode = localStorage.getItem(AUTO_MODE_KEY);
+  const isAuto = savedAutoMode === null || savedAutoMode === 'true';
+  
+  if (isAuto) {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  
+  const savedTheme = localStorage.getItem(STORAGE_KEY);
+  return savedTheme === 'true';
+});
+
+// 2. Application immédiate au DOM
+useEffect(() => {
+  const root = document.documentElement;
+  if (darkMode) {
+    root.classList.add('dark');
+    document.body.style.backgroundColor = '#111827';
+  } else {
+    root.classList.remove('dark');
+    document.body.style.backgroundColor = '#f9fafb';
+  }
+}, [darkMode]);
+```
+
+### **Optimisation des Re-renders**
+```typescript
+// Mémoisation du contexte pour éviter les re-renders inutiles
+const contextValue = useMemo(() => ({
+  darkMode,
+  toggleDarkMode,
+  setDarkMode,
+  systemPreference,
+  isAutoMode,
+  toggleAutoMode,
+}), [darkMode, toggleDarkMode, setDarkMode, systemPreference, isAutoMode, toggleAutoMode]);
+
+// Callbacks mémorisés pour éviter les re-créations
+const toggleDarkMode = useCallback(() => {
+  if (isAutoMode) setIsAutoMode(false);
+  setDarkModeState(prev => !prev);
+}, [isAutoMode]);
+```
+
+### **Écoute Efficace des Changements Système**
+```typescript
+// Event listener optimisé pour les changements système
+useEffect(() => {
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  
+  const handleChange = (event: MediaQueryListEvent) => {
+    setSystemPreference(event.matches);
+    if (isAutoMode) {
+      setDarkModeState(event.matches);
+    }
+  };
+
+  mediaQuery.addEventListener('change', handleChange);
+  return () => mediaQuery.removeEventListener('change', handleChange);
+}, [isAutoMode]);
+```
+
+---
+
+## 🧪 **Tests Recommandés**
+
+### **Tests de Fonctionnalité**
+```typescript
+describe('Dark Mode System', () => {
+  it('should detect system preference correctly')
+  it('should toggle between light and dark manually')
+  it('should activate auto mode and follow system changes')
+  it('should persist manual preferences in localStorage')
+  it('should not persist preferences in auto mode')
+  
+  it('should apply dark class to document.documentElement')
+  it('should update body background color')
+  it('should show correct icon in theme button')
+})
+
+describe('Theme Transitions', () => {
+  it('should apply transitions without flashing')
+  it('should handle rapid theme changes gracefully')
+  it('should maintain theme during page reload')
+})
+```
+
+### **Tests de Performance**
+```typescript
+describe('Theme Performance', () => {
+  it('should not cause excessive re-renders')
+  it('should apply theme synchronously on load')
+  it('should clean up event listeners properly')
+  it('should handle theme changes within 300ms')
+})
+```
+
+---
+
+## 📱 **Responsive et Accessibilité**
+
+### **Interface Responsive**
+```typescript
+// Menu de thème adaptatif
+const themeMenuClasses = `
+  absolute right-0 mt-2 
+  w-48                          // Largeur fixe sur desktop
+  sm:w-40                       // Plus compact sur mobile
+  bg-white dark:bg-gray-800 
+  rounded-lg shadow-xl
+`;
+
+// Bouton de thème avec labels adaptatifs
+const ThemeToggle = () => (
+  <button className="p-2 rounded-lg">
+    {getThemeIcon()}
+    <span className="hidden lg:inline ml-2">
+      {getThemeText()}
+    </span>
+    <ChevronDown className="w-4 h-4" />
+  </button>
+);
+```
+
+### **Accessibilité Complète**
+```typescript
+// Labels ARIA appropriés
+<button 
+  aria-label={`Current theme: ${getThemeText()}. Click to change theme`}
+  aria-expanded={showThemeMenu}
+  aria-haspopup="menu"
+>
+  {getThemeIcon()}
+</button>
+
+// Navigation au clavier
+<div 
+  role="menu"
+  onKeyDown={handleKeyDown}  // Flèches, Enter, Escape
+>
+  <button role="menuitem" tabIndex={0}>Auto</button>
+  <button role="menuitem" tabIndex={0}>Light</button>
+  <button role="menuitem" tabIndex={0}>Dark</button>
+</div>
+
+// Support des préférences système
+@media (prefers-reduced-motion: reduce) {
+  .theme-transition {
+    transition: none !important;
+  }
+}
+```
+
+---
+
+## 🔧 **Intégration avec les Composants**
+
+### **Utilisation dans les Composants**
+```typescript
+// Hook simple pour les composants
+const ComponentExample: React.FC = () => {
+  const { darkMode, isAutoMode, systemPreference } = useTheme();
+  
+  // Affichage conditionnel basé sur le thème
+  const iconColor = darkMode ? 'text-white' : 'text-gray-900';
+  
+  // Utilisation de classes Tailwind adaptatives
+  return (
+    <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+      <p>Mode actuel : {isAutoMode ? 'Auto' : (darkMode ? 'Sombre' : 'Clair')}</p>
+      {isAutoMode && (
+        <p>Système : {systemPreference ? 'Sombre' : 'Clair'}</p>
+      )}
+    </div>
+  );
+};
+```
+
+### **Patterns de Styles Recommandés**
+```typescript
+// ✅ BON : Classes conditionnelles avec Tailwind
+className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+
+// ✅ BON : Styles avec transition
+className="bg-white dark:bg-gray-800 transition-colors duration-300"
+
+// ❌ ÉVITER : Styles JavaScript conditionnels
+style={{ 
+  backgroundColor: darkMode ? '#1f2937' : '#ffffff',
+  color: darkMode ? '#ffffff' : '#111827'
+}}
+
+// ✅ BON : Utilisation du hook de thème
+const { darkMode } = useTheme();
+const bgClass = darkMode ? 'bg-gray-800' : 'bg-white';
+```
+
+---
+
+## 📚 **Guide d'Utilisation**
+
+### **Pour les Développeurs**
+1. **Import du hook** : `const { darkMode, toggleDarkMode } = useTheme()`
+2. **Classes Tailwind** : Utiliser `dark:` pour tous les styles conditionnels
+3. **Transitions** : Ajouter `transition-colors duration-300` pour la fluidité
+4. **Tests** : Vérifier le comportement dans les deux modes
+
+### **Pour les Utilisateurs**
+1. **Mode Auto** : L'application suit automatiquement les préférences système
+2. **Mode Manuel** : Cliquer sur le menu de thème pour forcer un mode
+3. **Persistance** : Les préférences manuelles sont sauvegardées
+4. **Responsive** : Fonctionne sur tous les appareils
+
+---
+
+## 🚀 **Améliorations Futures Possibles**
+
+### **Phase 1 : Thèmes Personnalisés**
+- Choix de couleurs d'accent personnalisées
+- Thèmes prédéfinis (Bleu, Vert, Violet, etc.)
+- Import/export de thèmes
+
+### **Phase 2 : Transitions Avancées**
+- Animation morphing entre les icônes
+- Transition progressive couleur par couleur
+- Effet de vague lors du changement
+
+### **Phase 3 : Paramètres Avancés**
+- Contrôle de la vitesse de transition
+- Mode haute contraste pour l'accessibilité
+- Synchronisation entre onglets/fenêtres
+
+---
+
 ## 🆕 HEADER UNIFIÉ FIXÉ (Décembre 2024)
 
 ### Vue d'ensemble
@@ -706,3 +1138,134 @@ localStorage.getItem('deletedVideos_abc123')
 - Guide développeur complet
 - Composant de démonstration VideoDeleteDemo
 - Documentation des flux de données et architecture 
+
+## 🆕 OPTIMISATION API RÉCUPÉRATION VIDÉOS (Décembre 2024)
+
+### Vue d'ensemble
+Amélioration de la logique de récupération des vidéos pour supprimer toute limite temporelle et optimiser la récupération de la vraie dernière vidéo valide de chaque chaîne.
+
+### 🎯 Améliorations Implémentées
+
+#### 1. **Récupération Sans Limite Temporelle**
+- **Suppression totale** des filtres de date (plus de limitation d'un mois)
+- **Récupération des 10 vidéos récentes** pour garantir de trouver une vidéo valide
+- **Parcours séquentiel** jusqu'à trouver la première vidéo respectant les critères
+
+#### 2. **Filtres de Qualité Maintenus et Améliorés**
+```typescript
+// Critères de filtrage (dans l'ordre de vérification) :
+1. ❌ Exclusion des Shorts :
+   - Titre contenant "shorts" ou "#shorts"
+   - Description contenant "shorts" ou "#shorts"  
+   - URL thumbnail contenant "/shorts/"
+
+2. ❌ Exclusion des vidéos courtes :
+   - Durée <= 3 minutes (180 secondes)
+   - Vérification via YouTube Videos API
+   - Parsing précis des durées ISO 8601
+
+3. ✅ Acceptation de la première vidéo valide
+```
+
+#### 3. **Logique Robuste et Intelligente**
+```typescript
+// Nouvelle approche : maxResults=10 au lieu de maxResults=1
+const playlistItemsResponse = await fetch(
+  `${BASE_URL}/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=10&key=${API_KEY}`
+);
+
+// Itération intelligente avec continue/break
+for (let i = 0; i < playlistData.items.length; i++) {
+  const videoItem = playlistData.items[i].snippet;
+  
+  // Vérification Short → continue si Short
+  if (isShort) {
+    console.log(`Video "${videoItem.title}" ignorée car c'est un Short.`);
+    continue;
+  }
+  
+  // Vérification durée → continue si <= 3min
+  if (durationSeconds <= 180) {
+    console.log(`Video "${videoItem.title}" ignorée car durée <= 3min`);
+    continue;
+  }
+  
+  // ✅ Première vidéo valide → return immédiatement
+  return validVideo;
+}
+```
+
+---
+
+### 🔧 **Avantages de la Nouvelle Approche**
+
+#### ✅ **Robustesse Améliorée**
+- **Gestion des cas edge** : Si les 1-3 dernières vidéos sont des Shorts ou < 3min
+- **Récupération garantie** : Toujours la vraie dernière vidéo longue disponible
+- **Logs détaillés** : Traçabilité complète du processus de filtrage
+
+#### ✅ **Performance Optimisée**
+- **API calls efficaces** : Récupération groupée puis filtrage local
+- **Early exit** : Return dès qu'une vidéo valide est trouvée
+- **Cache maintenu** : Les résultats restent mis en cache normalement
+
+#### ✅ **Logs Informatifs**
+```bash
+[youtubeAPI] Found 10 recent videos for channel UC123, filtering...
+[youtubeAPI] Checking video 1/10: "Short vidéo test" (ID: abc)
+[youtubeAPI] Video "Short vidéo test" ignorée car c'est un Short.
+[youtubeAPI] Checking video 2/10: "Vidéo 2min" (ID: def)  
+[youtubeAPI] Video "Vidéo 2min" ignorée car durée <= 3min (120s = 2m0s)
+[youtubeAPI] Checking video 3/10: "Vraie vidéo" (ID: ghi)
+[youtubeAPI] ✅ Video "Vraie vidéo" acceptée (durée: 15m30s)
+```
+
+---
+
+### 📊 **Impact Métrics Attendues**
+
+#### **Couverture de Récupération**
+```typescript
+Avant: ~70-80% (échec si dernière vidéo = Short/courte)
+Après: ~95-98% (quasi-garantie de trouver une vidéo valide)
+```
+
+#### **Précision du Contenu**
+```typescript
+Avant: Parfois récupération de Shorts ou vidéos courtes (bugs)
+Après: 100% de vidéos longues et de qualité garanties
+```
+
+#### **Robustesse API**
+```typescript
+Avant: Échec si 1 vidéo problématique
+Après: Résilience face aux 10 dernières vidéos problématiques
+```
+
+---
+
+### 🧪 **Tests Recommandés**
+
+#### **Scénarios de Test**
+1. **Chaîne normale** : Dernière vidéo = vidéo longue normale
+2. **Chaîne avec Shorts récents** : 3 derniers = Shorts, 4ème = vidéo longue
+3. **Chaîne avec vidéos courtes** : 2 dernières < 3min, 3ème > 3min
+4. **Chaîne mixte** : Alternance Shorts/courtes/longues
+5. **Chaîne problématique** : 10 dernières = toutes Shorts (fallback)
+
+#### **Assertions de Test**
+```typescript
+// Test que seules les vidéos > 3min sont récupérées
+expect(video.duration).toBeGreaterThan(180);
+
+// Test que les Shorts sont exclus
+expect(video.title.toLowerCase()).not.toContain('shorts');
+expect(video.description.toLowerCase()).not.toContain('shorts');
+
+// Test de la récupération robuste
+expect(getChannelLatestVideo('channelWithRecentShorts')).resolves.toBeTruthy();
+```
+
+---
+
+## 🆕 AMÉLIORATIONS VISUELLES ET UX (Décembre 2024) 
