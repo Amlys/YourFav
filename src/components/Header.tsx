@@ -5,7 +5,10 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useSearch } from '../contexts/SearchContext';
 import { useFavorites } from '../contexts/FavoritesContext';
-import { Channel } from '../types.ts';
+import { Channel } from '../types/schemas';
+import { CategoryId } from '../types/common';
+import CategorySelector from './CategorySelector';
+import Modal from './Modal';
 
 const Header: React.FC = () => {
   const { darkMode, toggleDarkMode, setDarkMode, isAutoMode, toggleAutoMode, systemPreference } = useTheme();
@@ -21,6 +24,11 @@ const Header: React.FC = () => {
   
   // État pour le menu de thème
   const [showThemeMenu, setShowThemeMenu] = useState(false);
+
+  // État pour le modal de sélection de catégorie
+  const [channelToAdd, setChannelToAdd] = useState<Channel | null>(null);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [selectedCategoryForAdd, setSelectedCategoryForAdd] = useState<CategoryId | null>(null);
 
   useEffect(() => {
     // Cacher les résultats si on clique en dehors de la searchbar et de ses résultats
@@ -54,10 +62,20 @@ const Header: React.FC = () => {
       return;
     }
 
+    // Ouvrir le modal de sélection de catégorie
+    setChannelToAdd(channel);
+    setShowCategoryModal(true);
+    setShowResults(false);
+  };
+
+  const handleConfirmAddFavorite = async (categoryId: CategoryId | null) => {
+    if (!channelToAdd) return;
+
     try {
-      setAddingFavorite(channel.id);
-      await addFavorite(channel);
-      setShowResults(false);
+      setAddingFavorite(channelToAdd.id);
+      await addFavorite(channelToAdd, categoryId || undefined);
+      setShowCategoryModal(false);
+      setChannelToAdd(null);
       setQuery('');
       clearError();
     } catch (error) {
@@ -313,6 +331,77 @@ const Header: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Modal de sélection de catégorie */}
+      {showCategoryModal && channelToAdd && (
+        <Modal
+          isOpen={showCategoryModal}
+          onClose={() => {
+            setShowCategoryModal(false);
+            setChannelToAdd(null);
+          }}
+          title="Choisir une catégorie"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              {channelToAdd.thumbnail ? (
+                <img
+                  src={channelToAdd.thumbnail}
+                  alt={channelToAdd.title}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-600">
+                  <User size={24} className="text-gray-400" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white truncate">
+                  {channelToAdd.title}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Sélectionnez une catégorie pour cette chaîne
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Catégorie
+              </label>
+              <CategorySelector
+                selectedCategoryId={selectedCategoryForAdd}
+                onCategorySelect={setSelectedCategoryForAdd}
+                placeholder="Choisir une catégorie..."
+              />
+            </div>
+
+            <div className="flex space-x-3 pt-4">
+              <button
+                onClick={() => handleConfirmAddFavorite(selectedCategoryForAdd)}
+                disabled={addingFavorite === channelToAdd.id}
+                className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center"
+              >
+                {addingFavorite === channelToAdd.id ? (
+                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  'Ajouter aux favoris'
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setShowCategoryModal(false);
+                  setChannelToAdd(null);
+                  setSelectedCategoryForAdd(null);
+                }}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </header>
   );
 };

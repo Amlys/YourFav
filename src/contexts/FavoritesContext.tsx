@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Channel } from '../types';
+import { Channel } from '../types/schemas';
+import { CategoryId } from '../types/common';
 import { youtubeAPI } from '../services/youtubeAPI';
 import { db } from '../firebaseConfig';
 import { useAuth } from './AuthContext';
@@ -17,8 +18,10 @@ interface FavoritesContextType {
   favorites: Channel[];
   isLoading: boolean;
   error: string | null;
-  addFavorite: (channel: Channel) => Promise<void>;
+  addFavorite: (channel: Channel, categoryId?: CategoryId) => Promise<void>;
   removeFavorite: (channelId: string) => Promise<void>;
+  updateChannelCategory: (channelId: string, categoryId: CategoryId) => Promise<void>;
+  getFavoritesByCategory: (categoryId: CategoryId) => Channel[];
   clearError: () => void;
 }
 
@@ -82,7 +85,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
   }, [currentUser]);
 
-  const addFavorite = useCallback(async (channel: Channel) => {
+  const addFavorite = useCallback(async (channel: Channel, categoryId?: CategoryId) => {
     if (!currentUser) {
       setError("Vous devez être connecté pour ajouter des favoris.");
       console.warn("[FavoritesContext] Add favorite attempt while not logged in.");
@@ -95,9 +98,13 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       const userDocRef = doc(db, 'users', currentUser.uid);
       
-      // Utiliser directement la chaîne fournie (qui vient déjà de la recherche avec les bonnes infos)
-      console.log(`[FavoritesContext] Adding channel to favorites:`, channel);
-      const detailedChannel = channel;
+      // Ajouter la catégorie à la chaîne si fournie
+      const channelWithCategory: Channel = {
+        ...channel,
+        categoryId: categoryId
+      };
+      
+      console.log(`[FavoritesContext] Adding channel to favorites:`, channelWithCategory);
       
       // Vérifier d'abord si le document utilisateur existe
       const docSnap = await getDoc(userDocRef);
@@ -105,7 +112,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Si le document n'existe pas, le créer avant d'ajouter le favori
       if (!docSnap.exists()) {
         console.log(`[FavoritesContext] Creating new user document for user ${currentUser.uid} before adding favorite.`);
-        await setDoc(userDocRef, { favorites: [detailedChannel] });
+        await setDoc(userDocRef, { favorites: [channelWithCategory] });
         console.log(`[FavoritesContext] Channel ${channel.id} added to favorites for new user ${currentUser.uid}`);
         return; // Le listener onSnapshot va mettre à jour l'état
       }
@@ -121,7 +128,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Ajouter le favori
       console.log(`[FavoritesContext] Adding channel ${channel.id} to favorites for user ${currentUser.uid}`);
       await updateDoc(userDocRef, {
-        favorites: arrayUnion(detailedChannel)
+        favorites: arrayUnion(channelWithCategory)
       });
       console.log(`[FavoritesContext] Channel ${channel.id} added to favorites for user ${currentUser.uid}`);
       
@@ -167,6 +174,53 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [currentUser, favorites]);
 
+  const updateChannelCategory = useCallback(async (channelId: string, categoryId: CategoryId) => {
+    if (!currentUser) {
+      setError("Vous devez être connecté pour modifier la catégorie.");
+      return;
+    }
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const userDocRef = doc(db, 'users', currentUser.uid);
+      const channelToUpdate = favorites.find(fav => fav.id === channelId);
+      
+      if (!channelToUpdate) {
+        console.warn(`[FavoritesContext] Channel ${channelId} not found in favorites for user ${currentUser.uid} during category update.`);
+        return;
+      }
+      
+      const updatedChannel: Channel = {
+        ...channelToUpdate,
+        categoryId: categoryId
+      };
+      
+      // Supprimer l'ancien et ajouter le nouveau
+      await updateDoc(userDocRef, {
+        favorites: arrayRemove(channelToUpdate)
+      });
+      
+      await updateDoc(userDocRef, {
+        favorites: arrayUnion(updatedChannel)
+      });
+      
+      console.log(`[FavoritesContext] Channel ${channelId} category updated to ${categoryId} for user ${currentUser.uid}`);
+      
+    } catch (e: any) {
+      console.error(`[FavoritesContext] Error updating channel category ${channelId} for user ${currentUser.uid}:`, e.message || e);
+      setError(e.message || 'Failed to update channel category');
+      throw e;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentUser, favorites]);
+
+  const getFavoritesByCategory = useCallback((categoryId: CategoryId): Channel[] => {
+    return favorites.filter(channel => channel.categoryId === categoryId);
+  }, [favorites]);
+
   return (
     <FavoritesContext.Provider
       value={{
@@ -175,6 +229,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         error,
         addFavorite,
         removeFavorite,
+        updateChannelCategory,
+        getFavoritesByCategory,
         clearError,
       }}
     >

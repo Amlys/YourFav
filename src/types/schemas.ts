@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { 
   VideoId, 
   ChannelId, 
+  CategoryId,
   ISO8601Date, 
   NonEmptyString, 
   URL,
@@ -15,6 +16,7 @@ const URLSchema = z.string().url().transform(val => createBrandedString<'URL'>(v
 const ISO8601DateSchema = z.string().datetime().transform(val => createBrandedString<'ISO8601Date'>(val));
 const VideoIdSchema = z.string().min(1).transform(val => createBrandedString<'VideoId'>(val));
 const ChannelIdSchema = z.string().min(1).transform(val => createBrandedString<'ChannelId'>(val));
+const CategoryIdSchema = z.string().min(1).transform(val => createBrandedString<'CategoryId'>(val));
 
 // Schéma pour les miniatures YouTube
 const ThumbnailSchema = z.object({
@@ -31,12 +33,23 @@ const ThumbnailsSchema = z.object({
   maxres: ThumbnailSchema.optional(),
 });
 
+// Schéma pour Category
+export const CategorySchema = z.object({
+  id: CategoryIdSchema,
+  name: NonEmptyStringSchema,
+  description: z.string().default(''),
+  color: z.string().regex(/^#[0-9A-F]{6}$/i).default('#6B7280'), // Couleur hex
+  isDefault: z.boolean().default(false), // Pour les catégories par défaut
+  createdAt: ISO8601DateSchema,
+}).strict();
+
 // Schéma pour Channel
 export const ChannelSchema = z.object({
   id: ChannelIdSchema,
   title: NonEmptyStringSchema,
   description: z.string().default(''),
   thumbnail: z.string().url().optional().default(''),
+  categoryId: CategoryIdSchema.optional(), // Référence à la catégorie
 }).strict();
 
 // Schéma pour Video
@@ -138,6 +151,7 @@ export const YouTubeVideoContentDetailsSchema = z.object({
 // Types inférés des schémas
 export type Channel = z.infer<typeof ChannelSchema>;
 export type Video = z.infer<typeof VideoSchema>;
+export type Category = z.infer<typeof CategorySchema>;
 export type YouTubeSearchResponse = z.infer<typeof YouTubeSearchResponseSchema>;
 export type YouTubeChannelsResponse = z.infer<typeof YouTubeChannelsResponseSchema>;
 export type YouTubePlaylistItemsResponse = z.infer<typeof YouTubePlaylistItemsResponseSchema>;
@@ -152,6 +166,10 @@ export const validateChannel = (data: unknown): Channel => {
 
 export const validateVideo = (data: unknown): Video => {
   return VideoSchema.parse(data);
+};
+
+export const validateCategory = (data: unknown): Category => {
+  return CategorySchema.parse(data);
 };
 
 export const validateYouTubeSearchResponse = (data: unknown): YouTubeSearchResponse => {

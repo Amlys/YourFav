@@ -51,8 +51,9 @@ const LandingPage: React.FC = () => {
               YourFav
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-              Suivez vos chaînes YouTube préférées et découvrez leurs dernières vidéos en un seul endroit
+              Suivez vos chaînes YouTube préférées et découvrez leurs dernières vidéos et RIEN D'AUTRE !
             </p>
+            <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">Pas de Shorts, pas de suggestions, pas de pubs. </p>
             <button
               onClick={handleSignIn}
               className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg text-lg font-semibold transition-colors shadow-xl transform hover:scale-105"

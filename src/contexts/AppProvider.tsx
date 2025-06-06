@@ -3,6 +3,7 @@ import { AuthProvider } from './AuthContext';
 import { FavoritesProvider } from './FavoritesContext';
 import { SearchProvider } from './SearchContext';
 import { VideosProvider } from './VideosContext';
+import { CategoriesProvider } from './CategoriesContext';
 
 interface AppProviderProps {
   children: React.ReactNode;
@@ -11,13 +12,15 @@ interface AppProviderProps {
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   return (
     <AuthProvider>
-      <FavoritesProvider>
-        <SearchProvider>
-          <VideosProvider>
-            {children}
-          </VideosProvider>
-        </SearchProvider>
-      </FavoritesProvider>
+      <CategoriesProvider>
+        <FavoritesProvider>
+          <SearchProvider>
+            <VideosProvider>
+              {children}
+            </VideosProvider>
+          </SearchProvider>
+        </FavoritesProvider>
+      </CategoriesProvider>
     </AuthProvider>
   );
 };

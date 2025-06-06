@@ -5,6 +5,7 @@ export type Brand<T, K> = T & { __brand: K };
 export type VideoId = Brand<string, 'VideoId'>;
 export type ChannelId = Brand<string, 'ChannelId'>;
 export type UserId = Brand<string, 'UserId'>;
+export type CategoryId = Brand<string, 'CategoryId'>;
 export type ISO8601Date = Brand<string, 'ISO8601Date'>;
 export type NonEmptyString = Brand<string, 'NonEmptyString'>;
 export type URL = Brand<string, 'URL'>;
