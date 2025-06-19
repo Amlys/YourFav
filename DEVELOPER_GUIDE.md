@@ -33,6 +33,29 @@ Système complet de catégorisation des chaînes YouTube permettant aux utilisat
 
 ---
 
+## 📊 ANALYSE DE QUALITÉ - DÉCEMBRE 2024
+
+### **NOTE GLOBALE : 8.5/10** ⭐⭐⭐⭐⭐
+
+#### **Points Forts du Projet**
+- ✅ Architecture modulaire excellente avec contextes spécialisés
+- ✅ TypeScript strict et types brandés sécurisés
+- ✅ Validation Zod robuste avec schémas stricts
+- ✅ Gestion d'erreurs sophistiquée (ErrorBoundary multi-niveaux)
+- ✅ Performance optimisée (cache, virtualisation, lazy loading)
+- ✅ Configuration moderne (Vite, ESLint, Vitest)
+
+#### **Axes d'Amélioration Prioritaires**
+- 🔴 **CRITIQUE** : Résoudre import circulaire dans AppProvider.tsx
+- 🔴 **CRITIQUE** : Ajouter Prettier + pre-commit hooks (Husky)
+- 🟡 **IMPORTANT** : Augmenter couverture tests à 80%+
+- 🟡 **IMPORTANT** : Ajouter tests E2E avec Playwright
+- 🟢 **AMÉLIORATION** : Design system formel + CI/CD
+
+> **Voir :** `RAPPORT_ANALYSE_PROJET.md` et `PLAN_TACHES_AMELIORATION.md` pour le détail complet
+
+---
+
 ## 🏗️ Architecture Technique
 
 ### Contextes Spécialisés
@@ -1471,27 +1494,86 @@ localStorage.getItem('deletedVideos_abc123')
 - Shadows élégantes : `shadow-sm` pour subtilité, `shadow-lg` pour elevation
 - Grid gaps augmentés : `gap-6` pour plus de respiration
 
+### [v0.4.0] - 2024-12-19  
+#### ✨ Ajouté - Suppression Intelligente de Vidéos
+- **Propriété `is_deleted`** dans le schéma Video pour suppression intelligente
+- **Logique de restauration automatique** : si nouvelle vidéo différente → restoration
+- **Persistance complète** des vidéos avec état `is_deleted` dans localStorage
+- **Helpers dédiés** : `getDeletedVideos()` et `getVisibleVideos()` dans VideosContext
+- **Filtrage intelligent** : vidéos supprimées totalement cachées des onglets normaux
+
+#### 🔧 Modifié - Architecture de Suppression
+- **VideosContext refactorisé** : suppression de `deletedVideoIds`, utilisation de `is_deleted`
+- **fetchLatestVideos() intelligent** : logique de comparaison vidéo actuelle vs supprimée
+- **VideoFeed mis à jour** : utilisation de `getVisibleVideos()` pour tous les onglets normaux
+- **Transformers étendus** : `is_deleted: false` par défaut pour nouvelles vidéos
+- **Stockage optimisé** : localStorage synchronisé à chaque action
+
+### [v0.4.1] - 2024-12-19  
+#### 🐛 Corrigé - Persistance des Vidéos Supprimées
+- **Sauvegarde immédiate** : `markVideoDeleted()` et `restoreVideoFromDeleted()` sauvegardent instantanément dans localStorage
+- **Logique robuste** : Amélioration de la comparaison exacte des vidéos par ID dans `fetchLatestVideos()`
+- **Logs détaillés** : Ajout de logs pour tracer les opérations de suppression/restauration
+- **Gestion d'erreurs** : Protection contre les erreurs de parsing du localStorage
+- **Cohérence garantie** : Les vidéos supprimées restent supprimées après rechargement jusqu'à nouveau contenu
+
+### [v0.5.0] - 2024-12-19 🔥
+#### ✨ Ajouté - FIRESTORE PERSISTANCE COMPLÈTE
+- **Collection Firestore `videos`** : Persistance complète des vidéos avec propriété `is_deleted`
+- **Synchronisation temps réel** : Listener Firestore pour synchro multi-appareils
+- **Logique de comparaison intelligente** : Comparaison exacte par ID vidéo
+- **Suppression définitive** : Vidéos supprimées restent cachées jusqu'à nouveau contenu
+- **Restauration automatique** : Nouvelle vidéo différente → restauration automatique
+
+#### 🎯 Logique Firestore Intelligente
+```typescript
+// Structure Firestore
+/videos/{userId}/userVideos/{videoId}
+{
+  id: "videoId123",
+  title: "Titre vidéo",
+  channelId: "channelId",
+  is_deleted: false/true, // 🎯 Propriété clé
+  // ... autres propriétés
+}
+
+// Logique de comparaison
+if (existingVideo.id === newVideo.id) {
+  if (existingVideo.is_deleted) {
+    // ❌ Même vidéo supprimée → garder cachée
+    console.log("🗑️ Vidéo toujours supprimée, ne pas afficher");
+  } else {
+    // ✅ Même vidéo visible → mettre à jour métadonnées
+    await saveVideoToFirestore(videoWithThumbnail);
+  }
+} else {
+  // 🔄 Nouvelle vidéo détectée → remplacer l'ancienne
+  if (deletedVideoFromChannel) {
+    await deleteVideoFromFirestore(deletedVideoFromChannel.id);
+    console.log("🔄 RESTAURATION AUTOMATIQUE - Nouvelle vidéo");
+  }
+  await saveVideoToFirestore(videoWithThumbnail); // is_deleted: false
+}
+```
+
+#### 🚀 Avantages de Firestore
+- **Synchronisation multi-appareils** : Suppression sur mobile → invisible sur desktop
+- **Temps réel** : onSnapshot() pour mises à jour instantanées
+- **Robustesse** : Pas de perte de données lors refresh/reconnexion
+- **Scalabilité** : Structure adaptée pour croissance utilisateurs
+- **Cohérence** : Source de vérité unique dans le cloud
+
+#### 🔄 Migration localStorage → Firestore
+- **États utilisateur** : `watchedVideoIds` et `laterVideoIds` restent en localStorage
+- **Données vidéos** : Complètement migrées vers Firestore
+- **Rétrocompatibilité** : Aucun impact sur l'expérience utilisateur
+- **Performance** : Réduction des writes localStorage, optimisation mémoire
+
 ### [v0.2.0] - 2024-12-19
-#### ✨ Ajouté
-- Nouvel onglet "Supprimées" dans VideoFeed
-- État `deletedVideoIds` dans VideosContext
-- Méthodes `markVideoDeleted()` et `restoreVideoFromDeleted()`
-- Boutons Supprimer dans tous les onglets
-- Bouton Restaurer dans l'onglet Supprimées
-- Persistance localStorage pour les vidéos supprimées
-- Logique anti-conflit automatique
-- Interface utilisateur cohérente avec icônes Lucide
-
-#### 🔧 Modifié
-- Extension des types TypeScript pour inclure 'supprimees'
-- Filtrage des vidéos pour exclure les supprimées de "À voir"
-- Layout des boutons en `flex-wrap` pour s'adapter aux nouveaux boutons
-- Props de VideoCard étendues pour les nouvelles actions
-
-#### 📚 Documentation
-- Guide développeur complet
-- Composant de démonstration VideoDeleteDemo
-- Documentation des flux de données et architecture 
+#### ✨ Ajouté - Ancien Système de Suppression (remplacé en v0.4.0)
+- Ancien système avec `deletedVideoIds` et onglet dédié
+- Logique de suppression temporaire avec restauration manuelle
+- Interface basique de gestion des vidéos supprimées 
 
 ## 🆕 OPTIMISATION API RÉCUPÉRATION VIDÉOS (Décembre 2024)
 

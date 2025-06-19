@@ -19,13 +19,14 @@ const VideoFeed: React.FC = () => {
     fetchLatestVideos,
     watchedVideoIds,
     laterVideoIds,
-    deletedVideoIds,
     markVideoWatched,
     markVideoLater,
     markVideoDeleted,
     removeVideoFromWatched,
     removeVideoFromLater,
     restoreVideoFromDeleted,
+    getDeletedVideos,
+    getVisibleVideos,
   } = useVideos();
   const [refreshing, setRefreshing] = useState(false);
   const [showAll, setShowAll] = useState(false);
@@ -50,25 +51,27 @@ const VideoFeed: React.FC = () => {
     let baseVideos: typeof videos = [];
     
     if (tab === 'a_voir') {
-      baseVideos = videos.filter(
+      // 🆕 Vidéos à voir = visibles + non vues + non "plus tard"
+      baseVideos = getVisibleVideos().filter(
         v => !watchedVideoIds.includes(v.id) && 
-            !laterVideoIds.includes(v.id) && 
-            !deletedVideoIds.includes(v.id)
+            !laterVideoIds.includes(v.id)
       );
     } else if (tab === 'deja_vu') {
-      baseVideos = videos.filter(
+      // 🆕 Vidéos vues = parmi les visibles + marquées comme vues
+      baseVideos = getVisibleVideos().filter(
         v => watchedVideoIds.includes(v.id)
       );
     } else if (tab === 'plus_tard') {
-      baseVideos = videos.filter(
+      // 🆕 Vidéos plus tard = parmi les visibles + marquées "plus tard"
+      baseVideos = getVisibleVideos().filter(
         v => laterVideoIds.includes(v.id)
       );
     } else if (tab === 'supprimees') {
-      baseVideos = videos.filter(
-        v => deletedVideoIds.includes(v.id)
-      );
+      // 🆕 Vidéos supprimées = celles avec is_deleted: true
+      baseVideos = getDeletedVideos();
     } else {
-      baseVideos = videos;
+      // Par défaut : toutes les vidéos visibles
+      baseVideos = getVisibleVideos();
     }
 
     // Filtrage par chaîne
@@ -89,7 +92,7 @@ const VideoFeed: React.FC = () => {
     }
 
     return baseVideos;
-  }, [videos, tab, watchedVideoIds, laterVideoIds, deletedVideoIds, showAll, selectedChannel, selectedCategoryFilter, getChannelCategory]);
+  }, [videos, tab, watchedVideoIds, laterVideoIds, showAll, selectedChannel, selectedCategoryFilter, getChannelCategory, getVisibleVideos, getDeletedVideos]);
 
   // Statistiques par catégorie pour les boutons de filtre
   const categoryStats = useMemo(() => {
@@ -98,17 +101,16 @@ const VideoFeed: React.FC = () => {
     // Compter les vidéos par catégorie pour l'onglet actuel
     let baseVideos: typeof videos = [];
     if (tab === 'a_voir') {
-      baseVideos = videos.filter(
+      baseVideos = getVisibleVideos().filter(
         v => !watchedVideoIds.includes(v.id) && 
-            !laterVideoIds.includes(v.id) && 
-            !deletedVideoIds.includes(v.id)
+            !laterVideoIds.includes(v.id)
       );
     } else if (tab === 'deja_vu') {
-      baseVideos = videos.filter(v => watchedVideoIds.includes(v.id));
+      baseVideos = getVisibleVideos().filter(v => watchedVideoIds.includes(v.id));
     } else if (tab === 'plus_tard') {
-      baseVideos = videos.filter(v => laterVideoIds.includes(v.id));
+      baseVideos = getVisibleVideos().filter(v => laterVideoIds.includes(v.id));
     } else if (tab === 'supprimees') {
-      baseVideos = videos.filter(v => deletedVideoIds.includes(v.id));
+      baseVideos = getDeletedVideos();
     }
 
     // Appliquer le filtre par chaîne si nécessaire
@@ -124,7 +126,7 @@ const VideoFeed: React.FC = () => {
     });
 
     return stats;
-  }, [videos, tab, watchedVideoIds, laterVideoIds, deletedVideoIds, showAll, selectedChannel, getChannelCategory]);
+  }, [videos, tab, watchedVideoIds, laterVideoIds, showAll, selectedChannel, getChannelCategory, getVisibleVideos, getDeletedVideos]);
 
   // Mémoisation du nom de la chaîne sélectionnée
   const selectedChannelName = useMemo(() => 

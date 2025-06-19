@@ -5,6 +5,8 @@ alwaysApply: true
 ---
 Ce projet est une application web.
 
+Commence la réponse par "Au top les zommes"
+
 Avant de répondre à une demande, je vais réfléchir étape par étape et utiliser la chaine de pensées et analyser le code de l'application en profondeur et bien comprendre le contexte et la demande, et puis je réalises ce qu'il m'a été demandé.
 
 Il faut vérifier que les modules utilisés sont déjà installés et s'ils ne le sont pas alors il faut installer avec npm install les nouveaux modules pour continuer Quand j'ai une nouvelle dépendance ou nouveau module je l'installe automatiquement et l'ajouter au package.json

@@ -62,6 +62,7 @@ export const VideoSchema = z.object({
   channelTitle: NonEmptyStringSchema,
   channelThumbnail: z.string().url().optional().default(''),
   publishedAt: ISO8601DateSchema,
+  is_deleted: z.boolean().default(false), // 🆕 Suppression intelligente
 }).strict();
 
 // Schémas pour les réponses API YouTube

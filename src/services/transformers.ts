@@ -62,6 +62,7 @@ export const transformPlaylistItemToVideo = (
     channelTitle: snippet.channelTitle,
     channelThumbnail: channelThumbnail || '',
     publishedAt: snippet.publishedAt,
+    is_deleted: false, // 🆕 Nouvelles vidéos sont visibles par défaut
   };
 };
 
