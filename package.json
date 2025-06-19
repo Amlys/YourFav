@@ -4,14 +4,21 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/check-firebase-security.js && vite",
+    "dev:unsafe": "vite",
+    "vite:dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "security:firestore": "firebase deploy --only firestore:rules",
+    "security:check": "firebase firestore:rules:check",
+    "security:audit": "npm audit --audit-level moderate",
+    "security:deploy": "deploy-firestore-rules.bat",
+    "security:validate": "node scripts/check-firebase-security.js"
   },
   "dependencies": {
     "date-fns": "^3.3.1",
