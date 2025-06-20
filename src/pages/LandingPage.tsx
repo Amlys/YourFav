@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Youtube, PlayCircle, Star, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import Header from '../components/Header';
+import { extractFirstName } from '../utils/userUtils';
 
 const LandingPage: React.FC = () => {
   const { currentUser, signInWithGoogle } = useAuth();
@@ -16,7 +17,7 @@ const LandingPage: React.FC = () => {
         <div className="pt-16 lg:pt-18 flex items-center justify-center min-h-screen">
           <div className="text-center px-4">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Bienvenue, {currentUser.displayName || 'Utilisateur'} !
+              Bienvenue, {extractFirstName(currentUser.displayName, currentUser.email)} !
             </h1>
             <p className="text-gray-600 dark:text-gray-300 mb-8">
               Vous êtes connecté. Accédez à votre feed personnalisé.

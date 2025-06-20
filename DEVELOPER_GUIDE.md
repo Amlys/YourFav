@@ -1116,600 +1116,85 @@ APRÈS:
 
 ---
 
-## 🆕 AMÉLIORATIONS VISUELLES ET UX (Décembre 2024)
+## 🆕 AMÉLIORATIONS VISUELLES ET UX (Décembre 2024) 
+
+## 🆕 AFFICHAGE PRÉNOM UTILISATEUR (Décembre 2024) - ✅ IMPLÉMENTÉ
 
 ### Vue d'ensemble
-Amélioration complète de l'interface utilisateur pour une utilisation plein écran avec des cartes de vidéos plus grandes et une expérience visuelle plus moderne et élégante.
-
-### 🎨 Améliorations Implémentées
-
-#### 1. **Interface Plein Écran**
-- **App.tsx** : Suppression des contraintes de container pour utiliser tout l'espace disponible
-- **Layout** : Structure flex optimisée avec `min-h-screen` et `flex-1`
-- **Responsive** : Adaptation parfaite sur tous les écrans
-
-#### 2. **HomePage Optimisée**
-- **Grid Layout** : Passage de `lg:grid-cols-4` à `xl:grid-cols-5` pour plus d'espace vidéos
-- **Espacement** : Marges et padding optimisés (`px-3 py-4 lg:px-6 lg:py-6`)
-- **Section recherche** : Plus compacte avec `rounded-xl` et meilleurs espacements
-
-#### 3. **VideoCard Améliorées**
-- **Taille** : Cartes plus grandes avec plus de padding (`p-5`)
-- **Style** : `rounded-xl`, `shadow-lg`, hover avec `transform hover:-translate-y-1`
-- **Boutons** : Plus grands (`px-3 py-2`), meilleurs styles (`rounded-lg`, `shadow-sm`)
-- **Typographie** : Titres `text-lg font-semibold`, meilleure hiérarchie
-- **Thumbnails** : Tailles augmentées (8x8 pour channel, 10x10 pour modal)
-- **Modal** : Plus grand (`max-w-6xl`), padding généreux (`p-6`)
-
-#### 4. **VideoFeed Modernisé**
-- **Onglets** : Style pill avec `rounded-lg`, `shadow-md` pour l'actif
-- **Grid** : Support `2xl:grid-cols-4` pour très grands écrans
-- **Espacement** : Gaps augmentés (`gap-6`), padding généreux (`p-6`)
-- **États vides** : Meilleure présentation avec `max-w-md mx-auto`
-
-#### 5. **FavoritesList Élégante**
-- **Indicateur** : Barre rouge `border-r-4 border-red-600` pour sélection
-- **Thumbnails** : Tailles augmentées (`w-12 h-12`) avec `shadow-sm`
-- **Bouton suppression** : Hover avec background (`hover:bg-red-50`)
-- **Typographie** : Meilleure hiérarchie avec sous-titre "Chaîne YouTube"
-
----
-
-## 🆕 NOUVELLE FONCTIONNALITÉ : Suppression des Vidéos (Décembre 2024)
-
-### Vue d'ensemble
-Implementation complète de la fonctionnalité de suppression des vidéos avec possibilité de restauration, respectant l'architecture modulaire existante.
+Amélioration de l'affichage du profil utilisateur pour ne montrer que le prénom au lieu du nom complet, offrant une expérience plus personnelle et moins encombrée.
 
 ### 🎯 Fonctionnalités Implémentées
 
-#### 1. Nouvel Onglet "Supprimées"
-- Affiche toutes les vidéos marquées comme supprimées
-- Interface cohérente avec les onglets existants
-- Filtrage par chaîne disponible
-- Message vide spécialisé
-
-#### 2. Actions de Suppression
-- **Onglet "À voir"** : Boutons Déjà vu, Plus tard, **Supprimer**
-- **Onglet "Déjà visionnée"** : Boutons Retirer, **Supprimer**
-- **Onglet "Plus tard"** : Boutons Retirer, **Supprimer**
-- **Onglet "Supprimées"** : Bouton **Restaurer**
-
-#### 3. Gestion d'État Intelligente
-- Suppression → retire automatiquement de "vue" et "plus tard"
-- Marquer comme vue/plus tard → retire automatiquement de "supprimées"
-- Évite les conflits d'état automatiquement
-
-#### 4. Persistance par Utilisateur
-- Sauvegarde dans localStorage avec clé `deletedVideos_${userId}`
-- Isolation des données par utilisateur connecté
-- Synchronisation en temps réel
-
----
-
-## 🏗️ Architecture Technique
-
-### VideosContext.tsx
+#### 1. **Fonction Utilitaire extractFirstName**
 ```typescript
-interface VideosContextType {
-  // ... états existants
-  deletedVideoIds: string[];           // NOUVEAU
-  markVideoDeleted: (videoId: string) => void;     // NOUVEAU
-  restoreVideoFromDeleted: (videoId: string) => void; // NOUVEAU
-}
-```
-
-**Changements :**
-- Ajout de l'état `deletedVideoIds`
-- Nouvelles méthodes de gestion
-- Clé localStorage `deletedVideos_${userId}`
-- Logique anti-conflit dans tous les setters
-
-### VideoFeed.tsx
-```typescript
-type TabType = 'a_voir' | 'deja_vu' | 'plus_tard' | 'supprimees'; // 'supprimees' NOUVEAU
-```
-
-**Changements :**
-- Extension du type `tab` pour inclure 'supprimees'
-- Nouvel onglet dans l'interface
-- Filtrage étendu pour exclure les vidéos supprimées de "À voir"
-- Logique de filtrage pour l'onglet "Supprimées"
-- Handlers pour suppression et restauration
-
-### VideoCard.tsx
-```typescript
-interface VideoCardProps {
-  // ... props existantes
-  tab?: 'a_voir' | 'deja_vu' | 'plus_tard' | 'supprimees'; // 'supprimees' NOUVEAU
-  onMarkDeleted?: () => void;     // NOUVEAU
-  onRestoreDeleted?: () => void;  // NOUVEAU
-}
-```
-
-**Changements :**
-- Nouvelles props pour les actions de suppression/restauration
-- Bouton "Supprimer" avec icône `Trash2` dans tous les onglets
-- Bouton "Restaurer" avec icône `RotateCcw` dans l'onglet supprimées
-- Layout `flex-wrap` pour gérer plusieurs boutons
-
----
-
-## 🎨 Design System et Styles
-
-### 🌈 **Couleurs et Thèmes**
-```scss
-// Palette principale
---red-primary: #dc2626      // Rouge principal (boutons, accents)
---red-hover: #b91c1c        // Rouge au survol
---red-light: #fef2f2        // Rouge clair (backgrounds)
-
-// Greys
---gray-50: #f9fafb         // Background principal
---gray-100: #f3f4f6        // Elements neutres
---gray-800: #1f2937        // Dark mode primary
---gray-900: #111827        // Texte principal dark
-```
-
-### 📐 **Espacements Standardisés**
-```scss
-// Marges et padding
---spacing-xs: 0.75rem      // 12px - petits éléments
---spacing-sm: 1rem         // 16px - espacement standard
---spacing-md: 1.25rem      // 20px - espacement moyen
---spacing-lg: 1.5rem       // 24px - grands espacements
---spacing-xl: 2rem         // 32px - sections
-
-// Responsive
-Mobile:   px-3 py-4        // 12px horizontal, 16px vertical
-Desktop:  px-6 py-6        // 24px horizontal, 24px vertical
-```
-
-### 🎯 **Border Radius**
-```scss
---radius-sm: 0.5rem        // 8px - petits éléments
---radius-md: 0.75rem       // 12px - boutons standards
---radius-lg: 1rem          // 16px - cartes, modaux
---radius-xl: 1.5rem        // 24px - containers principaux
-```
-
-### 🎭 **Animations et Transitions**
-```scss
-// Durées standardisées
---transition-fast: 200ms    // Boutons, hover states
---transition-normal: 300ms  // Cartes, modaux
---transition-slow: 500ms    // Animations complexes
-
-// Easings
-ease-out: cubic-bezier(0, 0, 0.2, 1)    // Transitions naturelles
-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1) // Animations symétriques
-```
-
-### 🖼️ **Composants UI**
-
-#### **Boutons Standards**
-```tsx
-// Bouton principal
-className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors shadow-sm"
-
-// Bouton secondaire  
-className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-
-// Bouton icon
-className="p-2 text-gray-500 hover:text-red-600 rounded-lg hover:bg-gray-100 transition-all duration-200"
-```
-
-#### **Cartes Standards**
-```tsx
-// Carte principale
-className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-
-// Container simple
-className="bg-white dark:bg-gray-800 rounded-xl shadow-sm"
-```
-
-#### **Typography**
-```tsx
-// Titres principaux
-className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white"
-
-// Titres secondaires  
-className="text-xl font-bold text-gray-900 dark:text-white"
-
-// Cartes titres
-className="text-lg font-semibold text-gray-900 dark:text-white"
-
-// Texte body
-className="text-base text-gray-700 dark:text-gray-300"
-
-// Texte secondaire
-className="text-sm text-gray-500 dark:text-gray-400"
-```
-
----
-
-## 📱 **Responsive Design**
-
-### **Breakpoints Utilisés**
-```scss
-sm:   640px   // Mobile landscape
-md:   768px   // Tablet portrait  
-lg:   1024px  // Tablet landscape / Desktop small
-xl:   1280px  // Desktop
-2xl:  1536px  // Large desktop
-```
-
-### **Grid Layouts Responsifs**
-```tsx
-// HomePage Layout
-"grid grid-cols-1 xl:grid-cols-5 gap-4 lg:gap-6"
-// Mobile: 1 colonne
-// XL+: Sidebar (1 col) + Contenu (4 cols)
-
-// VideoFeed Grid
-"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6"
-// Mobile: 1 carte par ligne
-// Medium: 2 cartes par ligne  
-// Large: 2 cartes par ligne (garde de l'espace)
-// XL: 3 cartes par ligne
-// 2XL: 4 cartes par ligne
-```
-
-### **Espacements Responsifs**
-```tsx
-// Container principal
-"px-3 py-4 lg:px-6 lg:py-6"
-
-// Cartes internes
-"p-4 lg:p-5"
-
-// Headers
-"p-5 lg:p-6"
-```
-
----
-
-## ⚡ **Optimisations Performance**
-
-### **Mémoisation Maintenue**
-- `useMemo()` pour le filtrage des vidéos
-- `useCallback()` pour tous les handlers
-- Re-renders minimisés grâce à la structure modulaire
-
-### **Lazy Loading Optimisé**
-- `OptimizedImage` avec Intersection Observer
-- Skeleton loaders pour les états de chargement
-- Progressive enhancement des images
-
-### **Animations GPU**
-```tsx
-// Utilisation de transform pour les animations GPU
-"transform hover:-translate-y-1"    // GPU accelerated
-"transition-all duration-300"       // Smooth transitions
-```
-
----
-
-## 🧪 Tests Recommandés
-
-### Tests Visuels à Ajouter
-```typescript
-describe('Visual Improvements', () => {
-  it('should display full-screen layout correctly')
-  it('should show larger video cards with proper spacing')
-  it('should handle responsive grid layouts')
-  it('should animate hover states smoothly')
-})
-
-describe('UX Improvements', () => {
-  it('should provide clear visual feedback on interactions')
-  it('should maintain consistent spacing across components')
-  it('should handle dark mode transitions properly')
-})
-```
-
----
-
-## 🚀 Prochaines Améliorations Possibles
-
-### Phase 1 : Animations Avancées
-- **Micro-interactions** : Boutons avec ripple effect
-- **Page transitions** : Animations entre onglets
-- **Load states** : Skeltons plus sophistiqués
-
-### Phase 2 : Personnalisation
-- **Taille des cartes** : Option utilisateur petit/moyen/grand
-- **Densité d'affichage** : Compact/confortable/spacieux
-- **Thèmes personnalisés** : Couleurs d'accent configurables
-
-### Phase 3 : Accessibilité
-- **Keyboard navigation** : Navigation complète au clavier
-- **Screen readers** : ARIA labels optimisés
-- **Focus management** : Focus visible et logique
-
----
-
-## 🔄 Flux de Données
-
-### Cycle de Vie d'une Vidéo
-```
-📹 Nouvelle vidéo
-    ↓
-🟢 "À voir" (par défaut)
-    ↓
-┌─────────────────┬─────────────────┬─────────────────┐
-│ ✅ Déjà vu      │ ⏰ Plus tard    │ 🗑️ Supprimer   │
-└─────────────────┴─────────────────┴─────────────────┘
-    ↓                   ↓                   ↓
-🔵 "Déjà visionnée"  🟡 "Plus tard"    🔴 "Supprimées"
-    ↓                   ↓                   ↓
-┌─────────────┬───────┐ ┌─────────────┬───────┐ ┌─────────────┐
-│ ↩️ Retirer  │ 🗑️ Sup│ │ ↩️ Retirer  │ 🗑️ Sup│ │ 🔄 Restaurer │
-└─────────────┴───────┘ └─────────────┴───────┘ └─────────────┘
-```
-
-### Logique Anti-Conflit
-- **markVideoWatched()** → retire de `laterVideoIds` et `deletedVideoIds`
-- **markVideoLater()** → retire de `watchedVideoIds` et `deletedVideoIds`
-- **markVideoDeleted()** → retire de `watchedVideoIds` et `laterVideoIds`
-- **restoreVideoFromDeleted()** → retire seulement de `deletedVideoIds`
-
----
-
-## 💾 Persistance des Données
-
-### LocalStorage Structure
-```javascript
-// Clés par utilisateur
-`watchedVideos_${userId}`: string[]    // Existant
-`laterVideos_${userId}`: string[]      // Existant
-`deletedVideos_${userId}`: string[]    // NOUVEAU
-
-// Exemple de données
-localStorage.getItem('deletedVideos_abc123') 
-// → ["videoId1", "videoId2", "videoId3"]
-```
-
-### Synchronisation
-- Lecture au chargement de l'utilisateur
-- Sauvegarde automatique à chaque changement d'état
-- Nettoyage automatique lors de la déconnexion
-
----
-
-## 📝 Journal des Modifications
-
-### [v0.3.0] - 2024-12-19
-#### ✨ Ajouté - Améliorations Visuelles
-- Interface plein écran avec utilisation maximale de l'espace
-- Cartes de vidéos agrandies avec styles modernes
-- Grille responsive étendue (jusqu'à 4 colonnes sur 2XL)
-- Animations hover avec `transform` et transitions fluides
-- Design system cohérent avec espacements standardisés
-- Thème sombre amélioré avec meilleurs contrastes
-
-#### 🔧 Modifié - Interface Utilisateur
-- HomePage : Grid layout `xl:grid-cols-5` pour plus d'espace vidéos
-- VideoCard : Padding augmenté, `rounded-xl`, `shadow-lg`, hover effects
-- VideoFeed : Onglets en style pill avec `shadow-md` pour l'état actif  
-- FavoritesList : Indicateur visuel avec barre rouge, thumbnails plus grandes
-- Boutons : Tailles augmentées, `rounded-lg`, shadows subtiles
-- Typography : Hiérarchie améliorée, `font-semibold` pour les titres
-
-#### 🎨 Style - Design System
-- Border radius unifié : `rounded-xl` pour les containers
-- Espacements cohérents : `p-5 lg:p-6` pour les sections
-- Transitions standardisées : `duration-200/300` selon le contexte
-- Shadows élégantes : `shadow-sm` pour subtilité, `shadow-lg` pour elevation
-- Grid gaps augmentés : `gap-6` pour plus de respiration
-
-### [v0.4.0] - 2024-12-19  
-#### ✨ Ajouté - Suppression Intelligente de Vidéos
-- **Propriété `is_deleted`** dans le schéma Video pour suppression intelligente
-- **Logique de restauration automatique** : si nouvelle vidéo différente → restoration
-- **Persistance complète** des vidéos avec état `is_deleted` dans localStorage
-- **Helpers dédiés** : `getDeletedVideos()` et `getVisibleVideos()` dans VideosContext
-- **Filtrage intelligent** : vidéos supprimées totalement cachées des onglets normaux
-
-#### 🔧 Modifié - Architecture de Suppression
-- **VideosContext refactorisé** : suppression de `deletedVideoIds`, utilisation de `is_deleted`
-- **fetchLatestVideos() intelligent** : logique de comparaison vidéo actuelle vs supprimée
-- **VideoFeed mis à jour** : utilisation de `getVisibleVideos()` pour tous les onglets normaux
-- **Transformers étendus** : `is_deleted: false` par défaut pour nouvelles vidéos
-- **Stockage optimisé** : localStorage synchronisé à chaque action
-
-### [v0.4.1] - 2024-12-19  
-#### 🐛 Corrigé - Persistance des Vidéos Supprimées
-- **Sauvegarde immédiate** : `markVideoDeleted()` et `restoreVideoFromDeleted()` sauvegardent instantanément dans localStorage
-- **Logique robuste** : Amélioration de la comparaison exacte des vidéos par ID dans `fetchLatestVideos()`
-- **Logs détaillés** : Ajout de logs pour tracer les opérations de suppression/restauration
-- **Gestion d'erreurs** : Protection contre les erreurs de parsing du localStorage
-- **Cohérence garantie** : Les vidéos supprimées restent supprimées après rechargement jusqu'à nouveau contenu
-
-### [v0.5.0] - 2024-12-19 🔥
-#### ✨ Ajouté - FIRESTORE PERSISTANCE COMPLÈTE
-- **Collection Firestore `videos`** : Persistance complète des vidéos avec propriété `is_deleted`
-- **Synchronisation temps réel** : Listener Firestore pour synchro multi-appareils
-- **Logique de comparaison intelligente** : Comparaison exacte par ID vidéo
-- **Suppression définitive** : Vidéos supprimées restent cachées jusqu'à nouveau contenu
-- **Restauration automatique** : Nouvelle vidéo différente → restauration automatique
-
-#### 🎯 Logique Firestore Intelligente
-```typescript
-// Structure Firestore
-/videos/{userId}/userVideos/{videoId}
-{
-  id: "videoId123",
-  title: "Titre vidéo",
-  channelId: "channelId",
-  is_deleted: false/true, // 🎯 Propriété clé
-  // ... autres propriétés
-}
-
-// Logique de comparaison
-if (existingVideo.id === newVideo.id) {
-  if (existingVideo.is_deleted) {
-    // ❌ Même vidéo supprimée → garder cachée
-    console.log("🗑️ Vidéo toujours supprimée, ne pas afficher");
-  } else {
-    // ✅ Même vidéo visible → mettre à jour métadonnées
-    await saveVideoToFirestore(videoWithThumbnail);
-  }
-} else {
-  // 🔄 Nouvelle vidéo détectée → remplacer l'ancienne
-  if (deletedVideoFromChannel) {
-    await deleteVideoFromFirestore(deletedVideoFromChannel.id);
-    console.log("🔄 RESTAURATION AUTOMATIQUE - Nouvelle vidéo");
-  }
-  await saveVideoToFirestore(videoWithThumbnail); // is_deleted: false
-}
-```
-
-#### 🚀 Avantages de Firestore
-- **Synchronisation multi-appareils** : Suppression sur mobile → invisible sur desktop
-- **Temps réel** : onSnapshot() pour mises à jour instantanées
-- **Robustesse** : Pas de perte de données lors refresh/reconnexion
-- **Scalabilité** : Structure adaptée pour croissance utilisateurs
-- **Cohérence** : Source de vérité unique dans le cloud
-
-#### 🔄 Migration localStorage → Firestore
-- **États utilisateur** : `watchedVideoIds` et `laterVideoIds` restent en localStorage
-- **Données vidéos** : Complètement migrées vers Firestore
-- **Rétrocompatibilité** : Aucun impact sur l'expérience utilisateur
-- **Performance** : Réduction des writes localStorage, optimisation mémoire
-
-### [v0.2.0] - 2024-12-19
-#### ✨ Ajouté - Ancien Système de Suppression (remplacé en v0.4.0)
-- Ancien système avec `deletedVideoIds` et onglet dédié
-- Logique de suppression temporaire avec restauration manuelle
-- Interface basique de gestion des vidéos supprimées 
-
-## 🆕 OPTIMISATION API RÉCUPÉRATION VIDÉOS (Décembre 2024)
-
-### Vue d'ensemble
-Amélioration de la logique de récupération des vidéos pour supprimer toute limite temporelle et optimiser la récupération de la vraie dernière vidéo valide de chaque chaîne.
-
-### 🎯 Améliorations Implémentées
-
-#### 1. **Récupération Sans Limite Temporelle**
-- **Suppression totale** des filtres de date (plus de limitation d'un mois)
-- **Récupération des 10 vidéos récentes** pour garantir de trouver une vidéo valide
-- **Parcours séquentiel** jusqu'à trouver la première vidéo respectant les critères
-
-#### 2. **Filtres de Qualité Maintenus et Améliorés**
-```typescript
-// Critères de filtrage (dans l'ordre de vérification) :
-1. ❌ Exclusion des Shorts :
-   - Titre contenant "shorts" ou "#shorts"
-   - Description contenant "shorts" ou "#shorts"  
-   - URL thumbnail contenant "/shorts/"
-
-2. ❌ Exclusion des vidéos courtes :
-   - Durée <= 3 minutes (180 secondes)
-   - Vérification via YouTube Videos API
-   - Parsing précis des durées ISO 8601
-
-3. ✅ Acceptation de la première vidéo valide
-```
-
-#### 3. **Logique Robuste et Intelligente**
-```typescript
-// Nouvelle approche : maxResults=10 au lieu de maxResults=1
-const playlistItemsResponse = await fetch(
-  `${BASE_URL}/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=10&key=${API_KEY}`
-);
-
-// Itération intelligente avec continue/break
-for (let i = 0; i < playlistData.items.length; i++) {
-  const videoItem = playlistData.items[i].snippet;
-  
-  // Vérification Short → continue si Short
-  if (isShort) {
-    console.log(`Video "${videoItem.title}" ignorée car c'est un Short.`);
-    continue;
+// src/utils/userUtils.ts
+export const extractFirstName = (displayName?: string | null, email?: string | null): string => {
+  // Si displayName existe, extraire le premier mot (prénom)
+  if (displayName && displayName.trim()) {
+    const firstName = displayName.trim().split(' ')[0];
+    if (firstName) {
+      return firstName;
+    }
   }
   
-  // Vérification durée → continue si <= 3min
-  if (durationSeconds <= 180) {
-    console.log(`Video "${videoItem.title}" ignorée car durée <= 3min`);
-    continue;
+  // Sinon, extraire le prénom depuis l'email (partie avant le @)
+  if (email) {
+    const emailPart = email.split('@')[0];
+    // Si l'email contient des points, prendre la première partie
+    const firstName = emailPart.split('.')[0];
+    if (firstName) {
+      // Capitaliser la première lettre
+      return firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+    }
   }
   
-  // ✅ Première vidéo valide → return immédiatement
-  return validVideo;
-}
+  // Valeur par défaut
+  return 'Utilisateur';
+};
 ```
 
----
+#### 2. **Composants Mis à Jour**
 
-### 🔧 **Avantages de la Nouvelle Approche**
+##### **Header.tsx**
+- **Affichage nom** : `{extractFirstName(currentUser.displayName, currentUser.email)}`
+- **Alt image** : `{extractFirstName(currentUser.displayName, currentUser.email) + ' avatar'}`
+- **Import ajouté** : `import { extractFirstName } from '../utils/userUtils'`
 
-#### ✅ **Robustesse Améliorée**
-- **Gestion des cas edge** : Si les 1-3 dernières vidéos sont des Shorts ou < 3min
-- **Récupération garantie** : Toujours la vraie dernière vidéo longue disponible
-- **Logs détaillés** : Traçabilité complète du processus de filtrage
+##### **LandingPage.tsx**
+- **Message bienvenue** : `Bienvenue, {extractFirstName(currentUser.displayName, currentUser.email)} !`
+- **Import ajouté** : `import { extractFirstName } from '../utils/userUtils'`
 
-#### ✅ **Performance Optimisée**
-- **API calls efficaces** : Récupération groupée puis filtrage local
-- **Early exit** : Return dès qu'une vidéo valide est trouvée
-- **Cache maintenu** : Les résultats restent mis en cache normalement
+#### 3. **Logique d'Extraction Intelligente**
 
-#### ✅ **Logs Informatifs**
-```bash
-[youtubeAPI] Found 10 recent videos for channel UC123, filtering...
-[youtubeAPI] Checking video 1/10: "Short vidéo test" (ID: abc)
-[youtubeAPI] Video "Short vidéo test" ignorée car c'est un Short.
-[youtubeAPI] Checking video 2/10: "Vidéo 2min" (ID: def)  
-[youtubeAPI] Video "Vidéo 2min" ignorée car durée <= 3min (120s = 2m0s)
-[youtubeAPI] Checking video 3/10: "Vraie vidéo" (ID: ghi)
-[youtubeAPI] ✅ Video "Vraie vidéo" acceptée (durée: 15m30s)
-```
-
----
-
-### 📊 **Impact Métrics Attendues**
-
-#### **Couverture de Récupération**
+##### **Exemples de Fonctionnement**
 ```typescript
-Avant: ~70-80% (échec si dernière vidéo = Short/courte)
-Après: ~95-98% (quasi-garantie de trouver une vidéo valide)
+// Cas 1: displayName complet
+displayName: "John Doe" → "John"
+displayName: "Marie-Claire Dupont" → "Marie-Claire"
+
+// Cas 2: email uniquement
+email: "john.doe@gmail.com" → "John"
+email: "marie@outlook.fr" → "Marie"
+email: "jdupont@company.com" → "Jdupont"
+
+// Cas 3: aucun info
+displayName: null, email: null → "Utilisateur"
 ```
 
-#### **Précision du Contenu**
-```typescript
-Avant: Parfois récupération de Shorts ou vidéos courtes (bugs)
-Après: 100% de vidéos longues et de qualité garanties
-```
+#### 4. **Avantages UX**
 
-#### **Robustesse API**
-```typescript
-Avant: Échec si 1 vidéo problématique
-Après: Résilience face aux 10 dernières vidéos problématiques
-```
+##### **✅ Interface Plus Personnelle**
+- Salutation plus intime avec le prénom uniquement
+- Réduction de l'encombrement visuel dans le header
+- Respect de la vie privée (nom de famille masqué)
 
----
+##### **✅ Compatibilité Multi-Sources**
+- Support Google displayName (nom complet)
+- Fallback intelligent sur email si pas de displayName
+- Capitalisation automatique pour les emails
+- Valeur par défaut sécurisée
 
-### 🧪 **Tests Recommandés**
-
-#### **Scénarios de Test**
-1. **Chaîne normale** : Dernière vidéo = vidéo longue normale
-2. **Chaîne avec Shorts récents** : 3 derniers = Shorts, 4ème = vidéo longue
-3. **Chaîne avec vidéos courtes** : 2 dernières < 3min, 3ème > 3min
-4. **Chaîne mixte** : Alternance Shorts/courtes/longues
-5. **Chaîne problématique** : 10 dernières = toutes Shorts (fallback)
-
-#### **Assertions de Test**
-```typescript
-// Test que seules les vidéos > 3min sont récupérées
-expect(video.duration).toBeGreaterThan(180);
-
-// Test que les Shorts sont exclus
-expect(video.title.toLowerCase()).not.toContain('shorts');
-expect(video.description.toLowerCase()).not.toContain('shorts');
-
-// Test de la récupération robuste
-expect(getChannelLatestVideo('channelWithRecentShorts')).resolves.toBeTruthy();
-```
-
----
-
-## 🆕 AMÉLIORATIONS VISUELLES ET UX (Décembre 2024) 
+##### **✅ Cohérence Globale**
+- Même logique appliquée sur tous les composants
+- Import centralisé depuis utils/userUtils.ts
+- Code réutilisable et maintenable

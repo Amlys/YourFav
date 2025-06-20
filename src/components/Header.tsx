@@ -9,6 +9,7 @@ import { Channel } from '../types/schemas';
 import { CategoryId } from '../types/common';
 import CategorySelector from './CategorySelector';
 import Modal from './Modal';
+import { extractFirstName } from '../utils/userUtils';
 
 const Header: React.FC = () => {
   const { darkMode, toggleDarkMode, setDarkMode, isAutoMode, toggleAutoMode, systemPreference } = useTheme();
@@ -302,12 +303,12 @@ const Header: React.FC = () => {
                 {currentUser.photoURL && (
                   <img 
                     src={currentUser.photoURL} 
-                    alt={currentUser.displayName || 'User avatar'} 
+                    alt={extractFirstName(currentUser.displayName, currentUser.email) + ' avatar'} 
                     className="w-8 h-8 lg:w-9 lg:h-9 rounded-full border border-gray-200 dark:border-gray-600"
                   />
                 )}
                 <span className="text-sm lg:text-base text-gray-700 dark:text-gray-300 hidden sm:inline font-medium max-w-32 truncate">
-                  {currentUser.displayName || currentUser.email}
+                  {extractFirstName(currentUser.displayName, currentUser.email)}
                 </span>
                 <button
                   onClick={signOutUser}
