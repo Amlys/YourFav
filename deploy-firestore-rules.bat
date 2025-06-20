@@ -1,5 +1,5 @@
 @echo off
-echo 🔥 Déploiement des règles Firestore sécurisées pour YourFav...
+echo 🔥 Déploiement des règles Firestore sécurisées pour YourFeed...
 echo.
 
 REM Vérifier si Firebase CLI est installé

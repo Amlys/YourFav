@@ -116,7 +116,7 @@ const Header: React.FC = () => {
             className="flex items-center space-x-2 text-red-600 hover:text-red-700 transition-colors flex-shrink-0"
           >
             <Youtube size={28} />
-            <span className="font-bold text-xl lg:text-2xl">YourFav</span>
+            <span className="font-bold text-xl lg:text-2xl">YourFeed</span>
           </Link>
           
           {/* Search Section - Uniquement visible pour les utilisateurs connectés */}

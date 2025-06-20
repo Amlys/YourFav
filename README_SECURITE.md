@@ -1,4 +1,4 @@
-# 🛡️ Guide de Sécurisation Firebase Automatique - YourFav
+# 🛡️ Guide de Sécurisation Firebase Automatique - YourFeed
 
 ## 🚀 Démarrage Sécurisé Automatique
 
@@ -50,7 +50,7 @@ Quand tu lances `npm run dev`, le système exécute automatiquement :
 ### **Fichiers de configuration automatique :**
 
 ```
-📁 YourFav/
+📁 YourFeed/
 ├── 🔥 firestore.rules          # Règles de sécurité Firestore
 ├── ⚙️ firebase.json            # Configuration Firebase
 ├── 🔗 .firebaserc              # Projet Firebase lié
@@ -83,7 +83,7 @@ firebase projects:list
 ### **❌ Projet Firebase incorrect**
 ```bash
 # Changer de projet
-firebase use yourfav-feed
+firebase use yourfeed-app
 
 # Voir les projets disponibles
 firebase projects:list
@@ -168,7 +168,7 @@ npm run test:coverage       # Couverture de tests
 
 ## 🎉 Félicitations !
 
-**YourFav utilise maintenant un système de sécurisation Firebase automatique de niveau professionnel !**
+**YourFeed utilise maintenant un système de sécurisation Firebase automatique de niveau professionnel !**
 
 🛡️ **Ta base de données est protégée automatiquement à chaque démarrage**  
 🚀 **Zéro effort, sécurité maximale**  

@@ -3,7 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // 🔐 RÈGLES DE SÉCURITÉ POUR YOURFAV YOUTUBE FEED
+    // 🔐 RÈGLES DE SÉCURITÉ POUR YOURFEED YOUTUBE APPLICATION
     // Seuls les utilisateurs authentifiés peuvent accéder à leurs propres données
     
     // Collection principale des utilisateurs

@@ -82,7 +82,7 @@ describe('Integration Tests - Complete Application', () => {
     
     // Wait for auth loading to complete
     await waitFor(() => {
-      expect(screen.getByText(/Yourfav/)).toBeInTheDocument();
+      expect(screen.getByText(/YourFeed/)).toBeInTheDocument();
     }, { timeout: 2000 });
 
     console.log('HomePage rendered successfully');
@@ -96,7 +96,7 @@ describe('Integration Tests - Complete Application', () => {
     
     // Wait for initial load
     await waitFor(() => {
-      expect(screen.getByText(/Yourfav/)).toBeInTheDocument();
+      expect(screen.getByText(/YourFeed/)).toBeInTheDocument();
     });
 
     // Find search input

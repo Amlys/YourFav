@@ -161,7 +161,7 @@ async function deployFirestoreRules() {
 }
 
 async function main() {
-  console.log(`${colors.cyan}🔥 YourFav - Sécurisation Firebase automatique${colors.reset}`);
+  console.log(`${colors.cyan}🔥 YourFeed - Sécurisation Firebase automatique${colors.reset}`);
   console.log('');
   
   try {
@@ -204,7 +204,7 @@ async function main() {
     
     console.log('');
     log.security('🛡️  Sécurité Firebase déployée avec succès !');
-    log.success('✅ Base de données YourFav maintenant protégée');
+    log.success('✅ Base de données YourFeed maintenant protégée');
     log.info('🚀 Démarrage du serveur de développement sécurisé...');
     console.log('');
     
